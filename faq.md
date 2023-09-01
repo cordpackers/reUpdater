@@ -18,7 +18,7 @@ Rust is hard to reverse-engineer with, *I tried to do this before switching to t
 
 ## How does this compare to Mu (OpenAsar)?
 
-Mu is a different implementation that uses their own server. Mu also claims to be faster than Discord's implementation so if you want that use Mu instead. 
+Mu is a different implementation that uses their own server. (Also according to Ducko/CanadaHonk it's dead)
 
 reUpdater is just a replacement that replaces a part of Discord's **frontend** code, replicating the exact same in terms of functionality.
 
