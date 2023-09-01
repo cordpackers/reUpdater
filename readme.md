@@ -6,7 +6,7 @@ For questions read `faq.md`.
 
 ## Status
 
-Currently it's hard to estimate. And as an alpha program not 100% usable yet. Please use it with caution.
+Currently it's hard to estimate. And as it's in alpha it's not 100% usable yet. Please use it with caution.
 
 ## Usage
 
