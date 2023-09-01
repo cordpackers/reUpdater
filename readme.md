@@ -1,6 +1,6 @@
 # reUpdater
 
-A open source alternative to/replacement of Discord's Rust-programmed `updater.node`.
+An open source alternative to/replacement of Discord's Rust-programmed `updater.node`.
 
 For questions read `faq.md`.
 
