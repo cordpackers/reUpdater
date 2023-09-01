@@ -20,9 +20,9 @@ Rust is hard to reverse-engineer with, *I tried to do this before switching to t
 
 Mu is a different implementation that uses their own server. Mu also claims to be faster than Discord's implementation so if you want that use Mu instead. 
 
-Wumpdater is just a replacement that replaces a part of Discord's **frontend** code, replicating the exact same in terms of functionality.
+reUpdater is just a replacement that replaces a part of Discord's **frontend** code, replicating the exact same in terms of functionality.
 
-Ignoring the technical side, Wumpdater uses Discord's server so it would be updated as same as Discord's, Mu will lag behind in this a little bit.
+Ignoring the technical side, reUpdater uses Discord's server so it would be updated as same as Discord's, Mu will lag behind in this a little bit.
 
 (Sidenote: Mu, and by extension OpenAsar removes functions that are deemed unnesecary for an asar replacement, for repackers like me, that's bad enough. No hate for OpenAsar though!)
 
