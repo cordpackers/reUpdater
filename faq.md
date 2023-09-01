@@ -12,6 +12,8 @@ For all the questions.
 
 Rust is hard to reverse-engineer with, *I tried to do this before switching to the approach I am doing right now*. So this will not be 100% match the original bytecode. However, you would expect the functionalities will be intact.
 
+Besides I want to do improvements to `updater.node` anyways.
+
 ## Will this include Discord's code?
 
 **No.** Although this is not a competing replacement of Discord, it's better safe to make a completely new code than to include Discord's. Just look at Spacebar.
@@ -29,3 +31,7 @@ Ignoring the technical side, reUpdater uses Discord's server so it would be upda
 ## Will I use this to connect to a compatible backend replacement?
 
 Sure you can! Although it's not on this side of the frontend though, you should change it in `app.asar`.
+
+## What improvements does this have over the original?
+
+Multithreading. That's it. As I want to keep it 100% compatible with `app.asar`, not removing features from the original and mostly same functionality

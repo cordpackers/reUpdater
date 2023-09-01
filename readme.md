@@ -6,7 +6,7 @@ For questions read `faq.md`.
 
 ## Status
 
-Currently the completion status is 2% in my estimation. It's not 100% usable yet.
+Currently it's hard to estimate. And as an alpha program not 100% usable yet. Please use it with caution.
 
 ## Usage
 
