@@ -1,4 +1,4 @@
-const { parentPort, workerData} = require('worker_threads');
+const { parentPort, workerData } = require("worker_threads");
 
 // Downloads the files to rootPath/download. It first download as .tmp(randomID) in the incoming folder of the download folder but after finish move to the download folder and rename it to the hash.
 // all files are in .tar.br
@@ -65,43 +65,44 @@ async function performUpdate(
     bytes
   ).detail();
 
-  parentPort.postMessage(detail)
+  parentPort.postMessage(detail);
 
   // update here i guess
 
   switch (type) {
     case "HostDownload": {
-        state = "Working"
-        progress = 1.0;
-        bytes = 1239;
-        detail = new TaskProgressDetail(
-          type,
-          version,
-          from_version,
-          package_sha256,
-          url,
-          state,
-          progress,
-          bytes
-        ).detail();
+      state = "Working";
+      progress = 1.0;
+      bytes = 1239;
+      detail = new TaskProgressDetail(
+        type,
+        version,
+        from_version,
+        package_sha256,
+        url,
+        state,
+        progress,
+        bytes
+      ).detail();
 
-        parentPort.postMessage(detail)
-        break;
-    };
+      parentPort.postMessage(detail);
+      break;
+    }
     case "ModuleDownload": {
-      
+      break;
     }
     case "HostInstall": {
-        break;
+      break;
     }
     case "ModuleInstall": {
-        
     }
   }
 }
 
-const {type, version, from_version, package_sha256, url} = workerData;
+const { type, version, from_version, package_sha256, url } = workerData;
 
-performUpdate(type, version, from_version, package_sha256, url).catch((error) => {
-  console.error('eh')
-})
+performUpdate(type, version, from_version, package_sha256, url).catch(
+  (error) => {
+    console.error("eh");
+  }
+);
