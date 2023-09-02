@@ -6,9 +6,9 @@ class SQLiteDB {
   constructor(dbPath: string) {
     this.db = new sqlite3.Database(dbPath, (err) => {
       if (err) {
-        console.error("Error opening database:", err.message);
+        console.error("[Updater] Error opening database:", err.message);
       } else {
-        console.log("Connected to the database");
+        console.log("[Updater] Connected to the database");
       }
     });
   }
@@ -28,9 +28,9 @@ class SQLiteDB {
   close(): void {
     this.db.close((err) => {
       if (err) {
-        console.error("Error closing database:", err.message);
+        console.error("[Updater] Error closing database:", err.message);
       } else {
-        console.log("Database connection closed");
+        console.log("[Updater] Database connection closed");
       }
     });
   }

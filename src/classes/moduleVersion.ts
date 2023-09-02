@@ -9,8 +9,8 @@ class moduleVersion {
           release_channel: any;
           platform: any;
           arch: string;
-          version: any;
         };
+        version: any;
       },
       name: any,
       version: any
@@ -20,7 +20,7 @@ class moduleVersion {
         (this.version = version);
     }
   
-    details() {
+    formatted() {
       return {
         module: {
           host_version: {
@@ -33,4 +33,4 @@ class moduleVersion {
     }
   }
 
-  export {moduleVersion};
+  export = moduleVersion;
