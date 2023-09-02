@@ -1,56 +1,9 @@
-const { parentPort, workerData } = require("worker_threads");
+import { parentPort, workerData } from "worker_threads";
+
+import TaskProgressDetail from "../classes/messages/taskProgress";
 
 // Downloads the files to rootPath/download. It first download as .tmp(randomID) in the incoming folder of the download folder but after finish move to the download folder and rename it to the hash.
 // all files are in .tar.br
-
-class TaskProgressDetail {
-  task: any;
-  version: any;
-  from_version: null;
-  package_sha256: any;
-  url: any;
-  state: string;
-  progress: number;
-  bytes: number;
-
-  constructor(
-    task: any,
-    version: any,
-    from_version: null,
-    package_sha256: any,
-    url: any,
-    state: string,
-    progress: number,
-    bytes: number
-  ) {
-    this.task = task;
-    this.version = version;
-    this.from_version = from_version;
-    this.package_sha256 = package_sha256;
-    this.url = url;
-    this.state = state;
-    this.progress = progress;
-    this.bytes = bytes;
-  }
-
-  detail() {
-    return [
-      {
-        [this.task]: {
-          version: {
-            ...this.version,
-          },
-          from_version: this.from_version,
-          package_sha256: this.package_sha256,
-          url: this.url,
-        },
-      },
-      this.state,
-      this.progress,
-      this.bytes,
-    ];
-  }
-}
 
 // Both HostDownload and HostInstall will run, HostInstall will only start after HostDownload finishes, and same for Modules
 async function performUpdate(
@@ -72,9 +25,9 @@ async function performUpdate(
     state,
     progress,
     bytes
-  ).detail();
+  ).formatted();
 
-  parentPort.postMessage(detail);
+  parentPort?.postMessage(detail);
 
   // update here i guess
 
@@ -92,9 +45,9 @@ async function performUpdate(
         state,
         progress,
         bytes
-      ).detail();
+      ).formatted();
 
-      parentPort.postMessage(detail);
+      parentPort?.postMessage(detail);
       break;
     }
     case "ModuleDownload": {

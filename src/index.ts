@@ -2,7 +2,7 @@ import path from "path";
 
 import { SQLiteDB } from "./classes/database.js";
 import UpdateToLatest from "./utils/UpdateToLatest.js";
-import errorMessage from "./classes/errorMessage.js";
+import errorMessage from "./classes/messages/errorMessage.js";
 
 class Updater {
   response_handler: any;

@@ -2,10 +2,10 @@ import { Worker } from "worker_threads";
 import path from "path";
 import crypto from "crypto";
 
-import moduleVersion from "../classes/moduleVersion.js";
+import moduleVersion from "../classes/details/moduleVersion.js";
 import { SQLiteDB } from "../classes/database.js";
-import errorMessage from "../classes/errorMessage.js";
-import hostVersion from "src/classes/hostVersion.js";
+import errorMessage from "../classes/messages/errorMessage.js";
+import hostVersion from "src/classes/details/hostVersion.js";
 
 function runThread(
   workerScriptPath: string | URL,
@@ -17,10 +17,10 @@ function runThread(
         release_channel: any;
         platform: any;
         arch: string;
-        version: any;
       };
+      version: any;
     };
-    from_version: null;
+    from_version: any;
     package_sha256: any;
     url: any;
   },
@@ -135,7 +135,7 @@ async function UpdateToLatest(
 
     */
 
-    const hostVersionDetails = new hostVersion(
+    const newHostVersionDetails = new hostVersion(
       release_channel,
       platform,
       arch,
@@ -147,7 +147,7 @@ async function UpdateToLatest(
         {
           type: "HostDownload",
           version: {
-            ...hostVersionDetails
+            ...newHostVersionDetails
           },
           from_version: null,
           package_sha256: response.full.package_sha256,
@@ -158,7 +158,7 @@ async function UpdateToLatest(
         {
           type: "HostInstall",
           version:  {
-            ...hostVersionDetails
+            ...newHostVersionDetails
           },
           from_version: null,
           package_sha256: response.full.package_sha256,
@@ -172,7 +172,7 @@ async function UpdateToLatest(
       tasks[0].push({
         type: "ModuleDownload",
         version: new moduleVersion(
-          hostVersionDetails,
+          newHostVersionDetails,
           module,
           moduleData.module_version
         ).formatted(),
@@ -183,7 +183,7 @@ async function UpdateToLatest(
       tasks[1].push({
         type: "ModuleInstall",
         version: new moduleVersion(
-          hostVersionDetails,
+          newHostVersionDetails,
           module,
           moduleData.module_version
         ).formatted(),
@@ -204,10 +204,10 @@ async function UpdateToLatest(
                 release_channel: any;
                 platform: any;
                 arch: string;
-                version: any;
               };
+              version: any;
             };
-            from_version: null;
+            from_version: any;
             package_sha256: any;
             url: any;
           }) => runThread(workerScriptPath, task, response_handler, request)
