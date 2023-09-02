@@ -7,35 +7,46 @@ import moduleVersion from "../classes/details/moduleVersion.js";
 import { SQLiteDB } from "../classes/database.js";
 import errorMessage from "../classes/messages/errorMessage.js";
 import hostVersion from "../classes/details/hostVersion.js";
+import { folderExists } from "./FolderExists.js";
 
 function runThread(
-  workerScriptPath: string | URL,
-  workerData: {
-    type: string;
-    version: {
-      host: {
-        name: string;
-        release_channel: any;
-        platform: any;
-        arch: string;
-      };
-      version: any;
-    };
-    from_version: any;
-    package_sha256: any;
-    url: any;
-    root_path: any;
-  },
+  task: any,
+  workerData: any,
   response_handler: (arg0: string) => void,
-  request: any[],
+  request: any[]
 ) {
+
+  let workerScriptPath: any = "";
+
+  switch (task.type) {
+    case "HostDownload": 
+    case "ModuleDownload": {
+      workerScriptPath = path.join(
+        __dirname,
+        "..",
+        "workers",
+        "download.js"
+      );
+      break;
+    }
+    case "HostInstall": 
+    case "ModuleInstall": {
+      workerScriptPath = path.join(
+        __dirname,
+        "..",
+        "workers",
+        "extractAndInstall.js"
+      );
+    }
+  }
+
   return new Promise<void>((resolve, reject) => {
     const worker = new Worker(workerScriptPath, { workerData });
 
     worker.on("message", (message) => {
-      console.log(JSON.stringify([request[0], { TaskProgress: message }]));
+      const stringMessage = JSON.stringify(message);
       response_handler(JSON.stringify([request[0], { TaskProgress: message }]));
-      if (message.includes("Complete")) {
+      if (stringMessage.includes("Complete")) {
         resolve();
       }
     });
@@ -50,30 +61,6 @@ function runThread(
       }
     });
   });
-}
-
-function folderExists(path: string, response_handler: any, request: any) {
-  try {
-    const stats = fs.statSync(path);
-
-    if (stats.isDirectory()) {
-      return true;
-    } else {
-      return false;
-    }
-  } catch (error: any) {
-    if (error.code === "ENOENT") {
-      return false;
-    } else {
-      response_handler(
-        JSON.stringify([
-          request[0],
-          new errorMessage("Other", error, "Default").formatted(),
-        ])
-      );
-      return "error";
-    }
-  }
 }
 
 async function UpdateToLatest(
@@ -124,12 +111,6 @@ async function UpdateToLatest(
   const response = await fetchedData.json();
 
   if (!updateFinished) {
-    const workerScriptPath = path.join(
-      __dirname,
-      "..",
-      "workers",
-      "downloadAndInstall.js"
-    );
 
     // Delta updates require one version up, but tbh downloading full versions seems enough for now
 
@@ -225,66 +206,76 @@ async function UpdateToLatest(
 
     async function processTasks() {
       for (const task of tasks) {
-        const taskPromises = task.map(
-          (task: {
-            type: string;
-            version: {
-              host: {
-                name: string;
-                release_channel: any;
-                platform: any;
-                arch: string;
-              };
-              version: any;
-            };
-            from_version: any;
-            package_sha256: any;
-            url: any;
-          }) =>
+
+        const taskPromises = task.map((task: any) =>
             runThread(
-              workerScriptPath,
-              {...task, root_path: root_path},
+              task,
+              { ...task, root_path: root_path },
               response_handler,
               request
             )
         );
+
         await Promise.all(taskPromises);
       }
+      // replace new manifest in installer.db
+      // console.log(Install);
     }
 
     const downloadFolder = `${root_path}\\download`;
     const incomingFolder = `${root_path}\\download\\incoming`;
 
-    switch (folderExists(downloadFolder, response_handler, request)) {
+    const isFolderExist = folderExists(downloadFolder);
+
+    switch (isFolderExist) {
       case false: {
         fs.mkdirSync(downloadFolder);
         fs.mkdirSync(incomingFolder);
         break;
       }
       case true: {
-        fs.rmSync(downloadFolder, {force: true, recursive: true});
+        fs.rmSync(downloadFolder, { force: true, recursive: true });
         fs.mkdirSync(downloadFolder);
         fs.mkdirSync(incomingFolder);
         break;
       }
-      case 'error': {
-        return
+      case "error": {
+        response_handler(
+          JSON.stringify([
+            request[0],
+            new errorMessage(
+              "Other",
+              JSON.stringify(isFolderExist),
+              "Default"
+            ).formatted(),
+          ])
+        );
       }
     }
 
     try {
       await processTasks();
-      response_handler(
-        JSON.stringify([request[0], { ManifestInfo: { ...fetchedData } }])
-      );
     } catch (error) {
+      console.log(error);
       response_handler(
         JSON.stringify([
           request[0],
-          new errorMessage("Other", error, "Default").formatted(),
+          new errorMessage(
+            "Other",
+            JSON.stringify(error),
+            "Default"
+          ).formatted(),
         ])
       );
     }
+
+    /*
+    response_handler(
+      JSON.stringify([request[0], { ManifestInfo: { ...fetchedData } }])
+    );
+
+    updateFinished = true;
+    */
   } else {
     response_handler(
       JSON.stringify([request[0], { ManifestInfo: { ...fetchedData } }])

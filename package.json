@@ -20,10 +20,13 @@
   "homepage": "https://github.com/modulocord/reUpdater#readme",
   "devDependencies": {
     "@types/node": "^20.5.8",
+    "@types/tar": "^6.1.5",
+    "@types/tar-fs": "^2.0.1",
     "rimraf": "^5.0.1",
     "typescript": "^5.2.2"
   },
   "dependencies": {
-    "sqlite3": "^5.1.6"
+    "sqlite3": "^5.1.6",
+    "tar-fs": "^3.0.4"
   }
 }

@@ -1,36 +1,36 @@
 class moduleVersion {
-    hostVersion: any;
-    name: any;
-    version: any;
-    constructor(
-      hostVersion: {
-        host: {
-          name: string;
-          release_channel: any;
-          platform: any;
-          arch: string;
-        };
-        version: any;
-      },
-      name: any,
-      version: any
-    ) {
-      (this.hostVersion = hostVersion),
-        (this.name = name),
-        (this.version = version);
-    }
-  
-    formatted() {
-      return {
-        module: {
-          host_version: {
-            ...this.hostVersion,
-          },
-          name: this.name,
-        },
-        version: this.version,
+  hostVersion: any;
+  name: any;
+  version: any;
+  constructor(
+    hostVersion: {
+      host: {
+        name: string;
+        release_channel: any;
+        platform: any;
+        arch: string;
       };
-    }
+      version: any;
+    },
+    name: any,
+    version: any
+  ) {
+    (this.hostVersion = hostVersion),
+      (this.name = name),
+      (this.version = version);
   }
 
-  export = moduleVersion;
+  formatted() {
+    return {
+      module: {
+        host_version: {
+          ...this.hostVersion,
+        },
+        name: this.name,
+      },
+      version: this.version,
+    };
+  }
+}
+
+export = moduleVersion;

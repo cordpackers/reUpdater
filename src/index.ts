@@ -86,6 +86,8 @@ console.log(
   "[Updater] reUpdater v0.0.1 - Javascript-based updater.node replacement"
 );
 
+process.noAsar = true;
+
 export = {
   Updater,
 };

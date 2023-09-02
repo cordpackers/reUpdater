@@ -1,12 +1,19 @@
 import { parentPort, workerData } from "worker_threads";
 import * as fs from "fs";
+import path from "path";
 
 import TaskProgressDetail from "../classes/messages/taskProgress";
 
 // Downloads the files to rootPath/download. It first download as .tmp(randomID) in the incoming folder of the download folder but after finish move to the download folder and rename it to the hash.
 // all files are in .tar.br
 
-async function downloadFile(url: string, filePath: string, task: TaskProgressDetail, parentPort: any | undefined) {
+async function downloadFile(
+  url: string,
+  filePath: string,
+  package_sha256: string,
+  task: TaskProgressDetail,
+  parentPort: any
+) {
   const fileStream = fs.createWriteStream(filePath);
 
   const response = await fetch(url);
@@ -28,20 +35,41 @@ async function downloadFile(url: string, filePath: string, task: TaskProgressDet
     fileStream.write(value);
     receivedLength += value.length;
 
-    const percentage = (receivedLength / total) * 100
+    const percentage = (receivedLength / total) * 100;
 
-    task.updateTask({state: "Working", progress: parseFloat(percentage.toFixed(1)), bytes: receivedLength});
+    task.updateTask({
+      state: "Working",
+      progress: parseFloat(percentage.toFixed(1)),
+      bytes: receivedLength,
+    });
 
     parentPort?.postMessage(task.formatted());
   }
 
-  task.updateTask({state: "Complete", progress: 100.0, bytes: 0});
+  fs.renameSync(
+    filePath,
+    path.join(path.dirname(filePath), "..", package_sha256)
+  );
+
+  task.updateTask({ state: "Complete", progress: 100.0, bytes: 0 });
 
   parentPort?.postMessage(task.formatted());
 }
 
+function generate_id(length: number) {
+  let result = "";
+  const characters =
+    "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+  let counter = 0;
+  while (counter < length) {
+    result += characters.charAt(Math.floor(Math.random() * characters.length));
+    counter += 1;
+  }
+  return result;
+}
+
 // Both HostDownload and HostInstall will run, HostInstall will only start after HostDownload finishes, and same for Modules
-async function performUpdate(
+async function performDownload(
   type: any,
   version: any,
   from_version = null,
@@ -49,7 +77,6 @@ async function performUpdate(
   url: any,
   root_path: any
 ) {
-
   const task = new TaskProgressDetail(
     type,
     version,
@@ -65,27 +92,25 @@ async function performUpdate(
 
   // update here i guess
 
-  switch (type) {
-    case "HostDownload": {
-      downloadFile(url, `${root_path}\\download\\incoming\\${package_sha256}`, task, parentPort) // I know it was .tmpSoMeRanDomId before renaming to sha256 but idc
-      break;
-    }
-    case "ModuleDownload": {
-      downloadFile(url, `${root_path}\\download\\incoming\\${package_sha256}`, task, parentPort) // I know it was .tmpSoMeRanDomId before renaming to sha256 but idc
-      break;
-    }
-    case "HostInstall": {
-      break;
-    }
-    case "ModuleInstall": {
-    }
-  }
+  await downloadFile(
+    url,
+    `${root_path}\\download\\incoming\\.tmp${generate_id(6)}`,
+    package_sha256,
+    task,
+    parentPort
+  );
 }
 
-const { type, version, from_version, package_sha256, url, root_path } = workerData;
+const { type, version, from_version, package_sha256, url, root_path } =
+  workerData;
 
-performUpdate(type, version, from_version, package_sha256, url, root_path).catch(
-  (error) => {
-    console.error("eh");
-  }
-);
+performDownload(
+  type,
+  version,
+  from_version,
+  package_sha256,
+  url,
+  root_path
+).catch((error) => {
+  console.error("eh");
+});
