@@ -4,7 +4,9 @@ For all the questions.
 
 ## What is updater.node?
 
-`updater.node` is a node addon of `app.asar` that interacts with Discord's update server and installs updates. It is only for Windows users.
+`updater.node` is a node addon of `app.asar` that interacts with Discord's update server and installs updates. 
+
+It is only for Windows users, as it gets and modifies `installer.db` which is exclusive to squirrel.
 
 `updater.node` also has a function that gets known folders and creates shortcuts.
 
