@@ -10,7 +10,6 @@ class Updater {
   release_channel: any;
   platform: any;
   repository_url: any;
-  root_path: any;
   db: SQLiteDB;
   arch: () => "x64" | "x86" | undefined;
   install_id: any;
@@ -27,8 +26,7 @@ class Updater {
     this.release_channel = options.release_channel;
     this.platform = options.platform;
     this.repository_url = options.repository_url;
-    this.root_path = options.root_path;
-    this.db = new SQLiteDB(path.join(this.root_path, 'installer.db'))
+    this.db = new SQLiteDB(path.join(options.root_path, 'installer.db'))
     this.arch = () => {
       // convert ia32 and x32 to x86
       switch (process.arch) {
@@ -134,7 +132,6 @@ async function UpdateToLatest(
   },
   updateFinished: any
 ) {
-  console.log((await install_id()).slice(1, -1))
   const fetchedData = await fetch(
     `${repository_url}distributions/app/manifests/latest?install_id=${(await install_id()).slice(1, -1)}&channel=${release_channel}&platform=${platform}&arch=${arch}`
   );
