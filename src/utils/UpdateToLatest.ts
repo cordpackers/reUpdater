@@ -1,11 +1,12 @@
 import { Worker } from "worker_threads";
 import path from "path";
 import crypto from "crypto";
+import * as fs from "fs";
 
 import moduleVersion from "../classes/details/moduleVersion.js";
 import { SQLiteDB } from "../classes/database.js";
 import errorMessage from "../classes/messages/errorMessage.js";
-import hostVersion from "src/classes/details/hostVersion.js";
+import hostVersion from "../classes/details/hostVersion.js";
 
 function runThread(
   workerScriptPath: string | URL,
@@ -23,9 +24,10 @@ function runThread(
     from_version: any;
     package_sha256: any;
     url: any;
+    root_path: any;
   },
   response_handler: (arg0: string) => void,
-  request: any[]
+  request: any[],
 ) {
   return new Promise<void>((resolve, reject) => {
     const worker = new Worker(workerScriptPath, { workerData });
@@ -33,7 +35,7 @@ function runThread(
     worker.on("message", (message) => {
       console.log(JSON.stringify([request[0], { TaskProgress: message }]));
       response_handler(JSON.stringify([request[0], { TaskProgress: message }]));
-      if (message.type === "done") {
+      if (message.includes("Complete")) {
         resolve();
       }
     });
@@ -50,6 +52,30 @@ function runThread(
   });
 }
 
+function folderExists(path: string, response_handler: any, request: any) {
+  try {
+    const stats = fs.statSync(path);
+
+    if (stats.isDirectory()) {
+      return true;
+    } else {
+      return false;
+    }
+  } catch (error: any) {
+    if (error.code === "ENOENT") {
+      return false;
+    } else {
+      response_handler(
+        JSON.stringify([
+          request[0],
+          new errorMessage("Other", error, "Default").formatted(),
+        ])
+      );
+      return "error";
+    }
+  }
+}
+
 async function UpdateToLatest(
   response_handler: any,
   request: any,
@@ -57,6 +83,7 @@ async function UpdateToLatest(
     release_channel,
     platform,
     repository_url,
+    root_path,
     db,
     arch,
     install_id = null,
@@ -64,6 +91,7 @@ async function UpdateToLatest(
     release_channel: any;
     platform: any;
     repository_url: any;
+    root_path: any;
     db: SQLiteDB;
     arch: any;
     install_id: any;
@@ -102,6 +130,8 @@ async function UpdateToLatest(
       "workers",
       "downloadAndInstall.js"
     );
+
+    // Delta updates require one version up, but tbh downloading full versions seems enough for now
 
     /*
 
@@ -147,7 +177,7 @@ async function UpdateToLatest(
         {
           type: "HostDownload",
           version: {
-            ...newHostVersionDetails
+            ...newHostVersionDetails,
           },
           from_version: null,
           package_sha256: response.full.package_sha256,
@@ -157,8 +187,8 @@ async function UpdateToLatest(
       [
         {
           type: "HostInstall",
-          version:  {
-            ...newHostVersionDetails
+          version: {
+            ...newHostVersionDetails,
           },
           from_version: null,
           package_sha256: response.full.package_sha256,
@@ -210,24 +240,58 @@ async function UpdateToLatest(
             from_version: any;
             package_sha256: any;
             url: any;
-          }) => runThread(workerScriptPath, task, response_handler, request)
+          }) =>
+            runThread(
+              workerScriptPath,
+              {...task, root_path: root_path},
+              response_handler,
+              request
+            )
         );
         await Promise.all(taskPromises);
       }
     }
 
-    processTasks()
-      .then(() => {
-        // ManifestInfo
-      })
-      .catch((error) => {
-        console.error("Error:", error);
-      });
+    const downloadFolder = `${root_path}\\download`;
+    const incomingFolder = `${root_path}\\download\\incoming`;
+
+    switch (folderExists(downloadFolder, response_handler, request)) {
+      case false: {
+        fs.mkdirSync(downloadFolder);
+        fs.mkdirSync(incomingFolder);
+        break;
+      }
+      case true: {
+        fs.rmSync(downloadFolder, {force: true, recursive: true});
+        fs.mkdirSync(downloadFolder);
+        fs.mkdirSync(incomingFolder);
+        break;
+      }
+      case 'error': {
+        return
+      }
+    }
+
+    try {
+      await processTasks();
+      response_handler(
+        JSON.stringify([request[0], { ManifestInfo: { ...fetchedData } }])
+      );
+    } catch (error) {
+      response_handler(
+        JSON.stringify([
+          request[0],
+          new errorMessage("Other", error, "Default").formatted(),
+        ])
+      );
+    }
   } else {
-    // ManifestInfo
+    response_handler(
+      JSON.stringify([request[0], { ManifestInfo: { ...fetchedData } }])
+    );
   }
 
-  db.close();
+  //db.close();
 }
 
 export = UpdateToLatest;

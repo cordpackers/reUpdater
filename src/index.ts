@@ -9,6 +9,7 @@ class Updater {
   release_channel: any;
   platform: any;
   repository_url: any;
+  root_path: any;
   db: SQLiteDB;
   arch: () => "x64" | "x86" | undefined;
   install_id: () => any;
@@ -25,7 +26,8 @@ class Updater {
     this.release_channel = options.release_channel;
     this.platform = options.platform;
     this.repository_url = options.repository_url;
-    this.db = new SQLiteDB(path.join(options.root_path, "installer.db"));
+    this.root_path = options.root_path;
+    this.db = new SQLiteDB(path.join(this.root_path, "installer.db"));
     this.arch = () => {
       // convert ia32 and x32 to x86
       switch (process.arch) {
@@ -43,9 +45,11 @@ class Updater {
       let install_id: any = "";
 
       try {
-        const result = await this.db.runQuery('SELECT value FROM key_values WHERE key = "install_id"')
+        const result = await this.db.runQuery(
+          'SELECT value FROM key_values WHERE key = "install_id"'
+        );
         install_id = result[0].value.slice(1, -1);
-      } catch(error) {
+      } catch (error) {
         console.log(`[Updater]: install_id key does not exist. Nulling...`);
         install_id = null;
       }
@@ -66,6 +70,7 @@ class Updater {
             release_channel: this.release_channel,
             platform: this.platform,
             repository_url: this.repository_url,
+            root_path: this.root_path,
             db: this.db,
             arch: this.arch(),
             install_id: this.install_id(),
