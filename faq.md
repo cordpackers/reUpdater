@@ -6,7 +6,7 @@ For all the questions.
 
 `updater.node` is a node addon of `app.asar` that interacts with Discord's update server and installs updates. 
 
-It is only for Windows users, as it gets and modifies `installer.db` which is exclusive to squirrel.
+It is only for Windows users, as it relies on and modifies `installer.db` which is exclusive to Squirrel.Windows.
 
 `updater.node` also has a function that gets known folders and creates shortcuts.
 
@@ -36,4 +36,10 @@ Sure you can! Although it's not on this side of the frontend though, you should 
 
 ## What improvements does this have over the original?
 
-Multithreading. That's it. As I want to keep it 100% compatible with `app.asar`, not removing features from the original and mostly same functionality
+Multithreading. That's it. As I want to keep it 100% compatible with `app.asar`, not removing features from the original and mostly same functionality.
+
+## Would this be available to macOS/Linux users?
+
+**No.**
+
+As stated above, this relies on and modifies `installer.db` which is exclusive to Squirrel.Windows, which is Windows only.
