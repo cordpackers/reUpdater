@@ -1,9 +1,9 @@
-import { randomUUID } from "crypto";
 import { Worker } from "worker_threads";
 import path from "path";
 import { URL } from "url";
 
-import { moduleVersion } from "classes/moduleVersion";
+import { moduleVersion } from "./classes/moduleVersion.js";
+import { SQLiteDB } from "./classes/database.js";
 
 class Updater {
   response_handler: any;
@@ -11,7 +11,9 @@ class Updater {
   platform: any;
   repository_url: any;
   root_path: any;
-  install_id: string;
+  db: SQLiteDB;
+  arch: () => "x64" | "x86" | undefined;
+  install_id: any;
   updateFinished: boolean;
 
   constructor(options: {
@@ -26,7 +28,23 @@ class Updater {
     this.platform = options.platform;
     this.repository_url = options.repository_url;
     this.root_path = options.root_path;
-    this.install_id = randomUUID();
+    this.db = new SQLiteDB(path.join(this.root_path, 'installer.db'))
+    this.arch = () => {
+      // convert ia32 and x32 to x86
+      switch (process.arch) {
+        case "x64": {
+          return "x64";
+          break;
+        }
+        case "ia32": {
+          return "x86";
+          break;
+        }
+      }
+    };
+    this.install_id = (async () => {
+      return (await this.db.runQuery("SELECT value FROM key_values WHERE key = \"install_id\""))[0].value
+    });
     this.updateFinished = false;
   }
 
@@ -42,7 +60,9 @@ class Updater {
             release_channel: this.release_channel,
             platform: this.platform,
             repository_url: this.repository_url,
-            install_id: this.install_id,
+            db: this.db,
+            arch: this.arch(),
+            install_id: this.install_id
           },
           this.updateFinished
         );
@@ -101,28 +121,22 @@ async function UpdateToLatest(
     release_channel,
     platform,
     repository_url,
-    install_id,
+    db,
+    arch,
+    install_id
   }: {
     release_channel: any;
     platform: any;
     repository_url: any;
+    db: SQLiteDB;
+    arch: any;
     install_id: any;
   },
   updateFinished: any
 ) {
-  let arch = "";
-  // convert ia32 and x32 to x86
-  switch (process.arch) {
-    case "x64": {
-      arch = "x64";
-      break;
-    }
-    case "ia32": {
-      arch = "x86";
-    }
-  }
+  console.log((await install_id()).slice(1, -1))
   const fetchedData = await fetch(
-    `${repository_url}distributions/app/manifests/latest?install_id=${install_id}&channel=${release_channel}&platform=${platform}&arch=${arch}`
+    `${repository_url}distributions/app/manifests/latest?install_id=${(await install_id()).slice(1, -1)}&channel=${release_channel}&platform=${platform}&arch=${arch}`
   );
   const response = await fetchedData.json();
 
@@ -219,8 +233,12 @@ async function UpdateToLatest(
   } else {
     // ManifestInfo
   }
+
+  db.close();
 }
 
 console.log("reUpdater v0.0.1 - Javascript-based updater.node replacement");
 
-export { Updater };
+export = {
+  Updater
+};

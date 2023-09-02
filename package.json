@@ -2,10 +2,11 @@
   "name": "reupdater",
   "version": "0.0.1",
   "description": "An open source alternative to/replacement of Discord's Rust-programmed updater.node.",
+  "private": "true",
   "main": "./dist/index.js",
   "scripts": {
-    "dev": "npx tsc",
-    "build": "npx tsc && npm prune --omit=dev --omit=optional --omit=peer"
+    "dev": "rimraf ./dist && npx tsc",
+    "build": "rimraf ./dist && npx tsc && npm prune --omit=dev --omit=optional --omit=peer"
   },
   "repository": {
     "type": "git",
@@ -19,6 +20,7 @@
   "homepage": "https://github.com/modulocord/reUpdater#readme",
   "devDependencies": {
     "@types/node": "^20.5.8",
+    "rimraf": "^5.0.1",
     "typescript": "^5.2.2"
   },
   "dependencies": {

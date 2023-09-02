@@ -13,13 +13,13 @@ class SQLiteDB {
     });
   }
 
-  runQuery(query: string, params: any[] = []): Promise<void> {
-    return new Promise((resolve, reject) => {
-      this.db.run(query, params, (err) => {
+  async runQuery(query: string, params: any[] = []): Promise<any[]> {
+    return new Promise<any[]>((resolve, reject) => {
+      this.db.all(query, params, (err, rows) => {
         if (err) {
           reject(err.message);
         } else {
-          resolve();
+          resolve(rows);
         }
       });
     });
