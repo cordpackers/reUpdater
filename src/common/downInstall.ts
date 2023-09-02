@@ -4,15 +4,24 @@ const { parentPort, workerData } = require("worker_threads");
 // all files are in .tar.br
 
 class TaskProgressDetail {
+  task: any;
+  version: any;
+  from_version: null;
+  package_sha256: any;
+  url: any;
+  state: string;
+  progress: number;
+  bytes: number;
+
   constructor(
-    task,
-    version,
-    from_version,
-    package_sha256,
-    url,
-    state,
-    progress,
-    bytes
+    task: any,
+    version: any,
+    from_version: null,
+    package_sha256: any,
+    url: any,
+    state: string,
+    progress: number,
+    bytes: number
   ) {
     this.task = task;
     this.version = version;
@@ -45,11 +54,11 @@ class TaskProgressDetail {
 
 // Both HostDownload and HostInstall will run, HostInstall will only start after HostDownload finishes, and same for Modules
 async function performUpdate(
-  type,
-  version,
+  type: any,
+  version: any,
   from_version = null,
-  package_sha256,
-  url
+  package_sha256: any,
+  url: any
 ) {
   let state = "Waiting";
   let progress = 0.0;
