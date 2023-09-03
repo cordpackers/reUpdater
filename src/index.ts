@@ -83,10 +83,8 @@ class Updater {
 }
 
 console.log(
-  "[Updater] reUpdater v0.0.1 - Javascript-based updater.node replacement"
+  "[Updater] reUpdater v0.1.0 - Javascript-based updater.node replacement"
 );
-
-process.noAsar = true;
 
 export = {
   Updater,

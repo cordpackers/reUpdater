@@ -1,6 +1,6 @@
 {
   "name": "reupdater",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "description": "An open source alternative to/replacement of Discord's Rust-programmed updater.node.",
   "private": "true",
   "main": "./dist/index.js",
@@ -20,7 +20,6 @@
   "homepage": "https://github.com/modulocord/reUpdater#readme",
   "devDependencies": {
     "@types/node": "^20.5.8",
-    "@types/tar": "^6.1.5",
     "@types/tar-fs": "^2.0.1",
     "rimraf": "^5.0.1",
     "typescript": "^5.2.2"
