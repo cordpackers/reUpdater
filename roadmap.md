@@ -28,4 +28,5 @@
 ## Stubbed commands
 
 `SetManifests`, `Repair`, `CollectGarbage`
+
 Those will not do anything and will just return `[(TaskID), "Ok"]`
