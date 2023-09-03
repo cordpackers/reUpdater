@@ -6,7 +6,7 @@ import * as fs from "fs";
 import moduleVersion from "../classes/details/moduleVersion.js";
 import { SQLiteDB } from "../classes/database.js";
 import hostVersion from "../classes/details/hostVersion.js";
-import { folderExists } from "./FolderExists.js";
+import { folderExists } from "../utils/FolderExists.js";
 
 function runThread(
   task: any,

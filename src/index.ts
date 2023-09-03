@@ -1,7 +1,7 @@
 import path from "path";
 
 import { SQLiteDB } from "./classes/database.js";
-import UpdateToLatest from "./utils/UpdateToLatest.js";
+import UpdateToLatest from "./commands/UpdateToLatest.js";
 import errorMessage from "./classes/messages/errorMessage.js";
 
 class Updater {
@@ -77,6 +77,14 @@ class Updater {
             },
             this.updateFinished
           );
+          break;
+        }
+        case "InstallModule" in request[1]:
+        case "QueryCurrentVersions"in request[1]:
+        case "CollectGarbage" in request[1]:
+        case "Repair" in request[1]: 
+        case "SetManifests" in request[1]: {
+          // stubbed
         }
       }
     } catch (error) {
@@ -87,6 +95,19 @@ class Updater {
         ])
       );
     }
+  }
+
+  command_blocking(rawRequest: string) {
+    const request = JSON.parse(rawRequest);
+    // non async blocking command
+  }
+
+  known_folder(name: string) {
+    // returns Desktop or Start Menu
+  }
+
+  create_shortcut(options: any) {
+    // creates a shortcut on both Desktop or Start Menu if not exist
   }
 }
 
