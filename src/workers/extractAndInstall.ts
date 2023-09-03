@@ -57,20 +57,24 @@ async function handleExtract(
 ) {
   switch (type) {
     case "HostInstall": {
-      task.updateTask({ state: "Working", progress: 0.0, bytes: 0 });
+      task.state = "Working";
+      task.progress = 0.0;
+      task.bytes = 0;
 
       parentPort?.postMessage(task.formatted());
 
       const outputFolder = `${root_path}\\app-${version.version.join(".")}\\`;
 
-      createFolder(outputFolder)
+      createFolder(outputFolder);
 
       extractTar(filePath, outputFolder);
 
       break;
     }
     case "ModuleInstall": {
-      task.updateTask({ state: "Working", progress: 0.0, bytes: 0 });
+      task.state = "Working";
+      task.progress = 0.0;
+      task.bytes = 0;
 
       parentPort?.postMessage(task.formatted());
 
@@ -82,14 +86,16 @@ async function handleExtract(
 
       waitForFolder(path.join(root_path, `app-${hostVersion}`), 1000);
 
-      createFolder(modulesFolder)
-      createFolder(outputParentFolder)
-      createFolder(outputFolder)
+      createFolder(modulesFolder);
+      createFolder(outputParentFolder);
+      createFolder(outputFolder);
 
       extractTar(filePath, outputFolder);
     }
   }
-  task.updateTask({ state: "Complete", progress: 100.0, bytes: 0 });
+  task.state = "Complete";
+  task.progress = 100.0;
+  task.bytes = 0;
 
   parentPort?.postMessage(task.formatted());
 }

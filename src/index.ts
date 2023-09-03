@@ -32,11 +32,9 @@ class Updater {
       switch (process.arch) {
         case "x64": {
           return "x64";
-          break;
         }
         case "ia32": {
           return "x86";
-          break;
         }
       }
     };
@@ -75,7 +73,7 @@ class Updater {
               arch: this.arch(),
               install_id: this.install_id(),
             },
-            this.updateFinished
+            this
           );
           break;
         }
@@ -129,6 +127,7 @@ class Updater {
   create_shortcut(options: any) {
     // TODO: creates a shortcut on both Desktop or Start Menu if not exist
   }
+
 }
 
 console.log(

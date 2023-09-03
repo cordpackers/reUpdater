@@ -28,7 +28,7 @@ async function UpdateToLatest(
     arch: any;
     install_id: any;
   },
-  updateFinished: any
+  updater: any
 ) {
   if (!(await install_id)) {
     install_id = crypto.randomUUID();
@@ -53,7 +53,7 @@ async function UpdateToLatest(
         `SELECT value FROM key_values WHERE key = "host/app/${release_channel}/${platform}/${arch}"`
       )
     )[0].value
-  )[0].host_version;
+  )[0].host_version.version;
 
   console.log(`[Updater] Current version: ${currentHostVersion}`);
 
@@ -71,16 +71,23 @@ async function UpdateToLatest(
     )[0].value
   );
 
-  if (!response || response.full.host_version !== currentHostVersion) {
-    const fetchedData = await fetch(
+  const fetchedData = await (
+    await fetch(
       `${repository_url}distributions/app/manifests/latest?install_id=${install_id}&channel=${release_channel}&platform=${platform}&arch=${arch}`
-    );
-    response = await fetchedData.json();
+    )
+  ).json();
+
+  if (
+    !response ||
+    response.full.host_version !== currentHostVersion ||
+    response !== fetchedData
+  ) {
+    response = fetchedData;
 
     try {
       await db.runQuery(`
     UPDATE key_values
-    SET value = "${response}"
+    SET value = '${JSON.stringify(response)}'
     WHERE key = "latest/host/app/${release_channel}/${platform}/${arch}"
   `);
       console.log(
@@ -91,12 +98,13 @@ async function UpdateToLatest(
     }
   }
 
-  if (!updateFinished) {
+  if (!updater.updateFinished) {
     // TODO: Check if there is a delta update package, if there is, copy the whole current folder and install changes
     // Full update current works though but will work on delta updating in the future
 
     // TODO: update manifest in installer.db
     // host/app/development/win/x86: add new host+modules version, it's sha256 hash and install state
+    // remove if folder not exist
     // Discord Install States: PendingInstall, Installed, PendingDelete
     // My extended states: PendingDownload, Downloaded
 
@@ -180,7 +188,7 @@ async function UpdateToLatest(
 
     switch (isDownloadFolderExists) {
       case "folderExists": {
-        fs.rm(downloadFolder, { recursive: true, force: true }, () => { });
+        fs.rm(downloadFolder, { recursive: true, force: true }, () => {});
         createFolder(downloadFolder);
         createFolder(incomingFolder);
         break;
@@ -201,7 +209,7 @@ async function UpdateToLatest(
       JSON.stringify([request[0], { ManifestInfo: { ...response } }])
     );
 
-    updateFinished = true;
+    updater.updateFinished = true;
   } else {
     response_handler(
       JSON.stringify([request[0], { ManifestInfo: { ...response } }])

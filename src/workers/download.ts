@@ -35,11 +35,9 @@ async function downloadFile(
 
     const percentage = (receivedLength / total) * 100;
 
-    task.updateTask({
-      state: "Working",
-      progress: parseFloat(percentage.toFixed(1)),
-      bytes: receivedLength,
-    });
+    task.state = "Working";
+    task.progress = parseFloat(percentage.toFixed(1));
+    task.bytes = receivedLength;
 
     parentPort?.postMessage(task.formatted());
   }
@@ -49,7 +47,9 @@ async function downloadFile(
     path.join(path.dirname(filePath), "..", package_sha256)
   );
 
-  task.updateTask({ state: "Complete", progress: 100.0, bytes: 0 });
+  task.state = "Complete";
+  task.progress = 100.0;
+  task.bytes = 0;
 
   parentPort?.postMessage(task.formatted());
 }
@@ -107,5 +107,5 @@ performDownload(
   url,
   root_path
 ).catch((error) => {
-  throw error
+  throw error;
 });
