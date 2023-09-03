@@ -15,21 +15,15 @@ function runThread(
   response_handler: (arg0: string) => void,
   request: any[]
 ) {
-
   let workerScriptPath: any = "";
 
   switch (task.type) {
-    case "HostDownload": 
+    case "HostDownload":
     case "ModuleDownload": {
-      workerScriptPath = path.join(
-        __dirname,
-        "..",
-        "workers",
-        "download.js"
-      );
+      workerScriptPath = path.join(__dirname, "..", "workers", "download.js");
       break;
     }
-    case "HostInstall": 
+    case "HostInstall":
     case "ModuleInstall": {
       workerScriptPath = path.join(
         __dirname,
@@ -111,8 +105,7 @@ async function UpdateToLatest(
   const response = await fetchedData.json();
 
   if (!updateFinished) {
-
-    // Delta updates require one version up, but tbh downloading full versions seems enough for now
+    // TODO: Delta updates require one version up, but tbh downloading full versions seems enough for now
 
     /*
 
@@ -146,55 +139,42 @@ async function UpdateToLatest(
 
     */
 
-    const newHostVersionDetails = new hostVersion(
-      release_channel,
-      platform,
-      arch,
-      response.full.host_version
-    ).formatted();
+    const newHostVersionDetails = {
+      version: {
+        ...new hostVersion(
+          release_channel,
+          platform,
+          arch,
+          response.full.host_version
+        ).formatted(),
+      },
+      from_version: null,
+      package_sha256: response.full.package_sha256,
+      url: response.full.url,
+    };
 
     let tasks: [[any], [any]] = [
       [
         {
           type: "HostDownload",
-          version: {
-            ...newHostVersionDetails,
-          },
-          from_version: null,
-          package_sha256: response.full.package_sha256,
-          url: response.full.url,
+          ...newHostVersionDetails,
         },
       ],
       [
         {
           type: "HostInstall",
-          version: {
-            ...newHostVersionDetails,
-          },
-          from_version: null,
-          package_sha256: response.full.package_sha256,
-          url: response.full.url,
+          ...newHostVersionDetails,
         },
       ],
     ];
 
+    let modulesDetails: any[] = [];
+
     for (const module of response.required_modules) {
       const moduleData = response.modules[module].full;
-      tasks[0].push({
-        type: "ModuleDownload",
+      modulesDetails.push({
         version: new moduleVersion(
-          newHostVersionDetails,
-          module,
-          moduleData.module_version
-        ).formatted(),
-        from_version: null,
-        package_sha256: moduleData.package_sha256,
-        url: moduleData.url,
-      });
-      tasks[1].push({
-        type: "ModuleInstall",
-        version: new moduleVersion(
-          newHostVersionDetails,
+          newHostVersionDetails.version,
           module,
           moduleData.module_version
         ).formatted(),
@@ -204,22 +184,30 @@ async function UpdateToLatest(
       });
     }
 
+    for (const module of modulesDetails) {
+      tasks[0].push({
+        type: "ModuleDownload",
+        ...module,
+      });
+      tasks[1].push({
+        type: "ModuleInstall",
+        ...module,
+      });
+    }
+
     async function processTasks() {
       for (const task of tasks) {
-
         const taskPromises = task.map((task: any) =>
-            runThread(
-              task,
-              { ...task, root_path: root_path },
-              response_handler,
-              request
-            )
+          runThread(
+            task,
+            { ...task, root_path: root_path },
+            response_handler,
+            request
+          )
         );
 
         await Promise.all(taskPromises);
       }
-      // replace new manifest in installer.db
-      // console.log(Install);
     }
 
     const downloadFolder = `${root_path}\\download`;
@@ -269,13 +257,13 @@ async function UpdateToLatest(
       );
     }
 
-    /*
+    // TODO: replace new manifest in installer.db
+
     response_handler(
       JSON.stringify([request[0], { ManifestInfo: { ...fetchedData } }])
     );
 
     updateFinished = true;
-    */
   } else {
     response_handler(
       JSON.stringify([request[0], { ManifestInfo: { ...fetchedData } }])

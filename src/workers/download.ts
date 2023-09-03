@@ -4,9 +4,6 @@ import path from "path";
 
 import TaskProgressDetail from "../classes/messages/taskProgress";
 
-// Downloads the files to rootPath/download. It first download as .tmp(randomID) in the incoming folder of the download folder but after finish move to the download folder and rename it to the hash.
-// all files are in .tar.br
-
 async function downloadFile(
   url: string,
   filePath: string,
@@ -68,7 +65,6 @@ function generate_id(length: number) {
   return result;
 }
 
-// Both HostDownload and HostInstall will run, HostInstall will only start after HostDownload finishes, and same for Modules
 async function performDownload(
   type: any,
   version: any,
@@ -89,8 +85,6 @@ async function performDownload(
   );
 
   parentPort?.postMessage(task.formatted());
-
-  // update here i guess
 
   await downloadFile(
     url,

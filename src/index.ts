@@ -29,7 +29,6 @@ class Updater {
     this.root_path = options.root_path;
     this.db = new SQLiteDB(path.join(this.root_path, "installer.db"));
     this.arch = () => {
-      // convert ia32 and x32 to x86
       switch (process.arch) {
         case "x64": {
           return "x64";

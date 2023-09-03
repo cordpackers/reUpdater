@@ -5,7 +5,7 @@ import zlib from "zlib";
 import tar from "tar-fs";
 
 import TaskProgressDetail from "../classes/messages/taskProgress";
-import { folderExists } from "../utils/FolderExists";
+import { stdout } from "process";
 
 function waitForFolder(folderPath: any, intervalMs: number) {
   function checkFolder() {
@@ -62,7 +62,13 @@ async function handleExtract(
       parentPort?.postMessage(task.formatted());
 
       const outputFolder = `${root_path}\\app-${version.version.join(".")}\\`;
-      fs.mkdirSync(outputFolder);
+      try {
+        fs.mkdirSync(outputFolder);
+      } catch (error: any) {
+        if (error.code !== "EEXIST") {
+          throw error;
+        }
+      }
       extractTar(filePath, outputFolder);
 
       break;
@@ -80,22 +86,27 @@ async function handleExtract(
 
       waitForFolder(path.join(root_path, `app-${hostVersion}`), 1000);
 
-      console.log(folderExists(modulesFolder))
-
-      switch (folderExists(modulesFolder)) {
-        case false: {
-          fs.mkdirSync(modulesFolder);
-          break;
-        }
-        case true: {
-          break;
-        }
-        case "error": {
-          return;
+      try {
+        fs.mkdirSync(modulesFolder);
+      } catch (error: any) {
+        if (error.code !== "EEXIST") {
+          throw error;
         }
       }
-      fs.mkdirSync(outputParentFolder);
-      fs.mkdirSync(outputFolder);
+      try {
+        fs.mkdirSync(outputParentFolder);
+      } catch (error: any) {
+        if (error.code !== "EEXIST") {
+          throw error;
+        }
+      }
+      try {
+        fs.mkdirSync(outputFolder);
+      } catch (error: any) {
+        if (error.code !== "EEXIST") {
+          throw error;
+        }
+      }
 
       extractTar(filePath, outputFolder);
     }
@@ -149,5 +160,5 @@ performInstall(
   url,
   root_path
 ).catch((error) => {
-  console.log(error);
+  stdout.write(`${error}`);
 });
