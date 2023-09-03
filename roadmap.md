@@ -22,5 +22,10 @@
     - [ ] Update `installer.db` states
     - [ ] Show task progress
 
-## Needs research
-`SetManifests`, `Repair`, `CollectGarbage`, `QueryCurrentVersions` commands
+- [ ] QueryCurrentVersions
+    - [ ] Send updated versions
+
+## Stubbed commands
+
+`SetManifests`, `Repair`, `CollectGarbage`
+Those will not do anything and will just return `[(TaskID), "Ok"]`
