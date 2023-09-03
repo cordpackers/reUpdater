@@ -60,23 +60,32 @@ class Updater {
 
   async command(rawRequest: string) {
     const request = JSON.parse(rawRequest);
-    switch (true) {
-      case "UpdateToLatest" in request[1]: {
-        await UpdateToLatest(
-          this.response_handler,
-          request,
-          {
-            release_channel: this.release_channel,
-            platform: this.platform,
-            repository_url: this.repository_url,
-            root_path: this.root_path,
-            db: this.db,
-            arch: this.arch(),
-            install_id: this.install_id(),
-          },
-          this.updateFinished
-        );
+    try {
+      switch (true) {
+        case "UpdateToLatest" in request[1]: {
+          await UpdateToLatest(
+            this.response_handler,
+            request,
+            {
+              release_channel: this.release_channel,
+              platform: this.platform,
+              repository_url: this.repository_url,
+              root_path: this.root_path,
+              db: this.db,
+              arch: this.arch(),
+              install_id: this.install_id(),
+            },
+            this.updateFinished
+          );
+        }
       }
+    } catch (error) {
+      this.response_handler(
+        JSON.stringify([
+          request[0],
+          new errorMessage("Other", error, "Default").formatted(),
+        ])
+      );
     }
   }
 }

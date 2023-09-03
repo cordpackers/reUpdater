@@ -5,7 +5,6 @@ import zlib from "zlib";
 import tar from "tar-fs";
 
 import TaskProgressDetail from "../classes/messages/taskProgress";
-import { stdout } from "process";
 
 function waitForFolder(folderPath: any, intervalMs: number) {
   function checkFolder() {
@@ -13,10 +12,10 @@ function waitForFolder(folderPath: any, intervalMs: number) {
 
     fs.access(folderPath, (err) => {
       if (!err) {
-        console.log(`Folder '${folderPath}' exists.`);
+        console.log(`[Updater] Folder '${folderPath}' exists.`);
         success = true;
       } else {
-        console.log(`Folder '${folderPath}' does not exist.`);
+        console.log(`[Updater] Folder '${folderPath}' does not exist.`);
         setTimeout(checkFolder, intervalMs);
       }
     });
@@ -44,7 +43,7 @@ function extractTar(tarballPath: string, outputFolder: string) {
 
   compressedTarball.pipe(decompressedTarball).pipe(extract);
 
-  console.log("Tarball extraction completed successfully.");
+  console.log("[Updater] Tarball extraction completed successfully.");
 }
 
 async function handleExtract(
@@ -160,5 +159,5 @@ performInstall(
   url,
   root_path
 ).catch((error) => {
-  stdout.write(`${error}`);
+  throw error;
 });

@@ -5,7 +5,6 @@ import * as fs from "fs";
 
 import moduleVersion from "../classes/details/moduleVersion.js";
 import { SQLiteDB } from "../classes/database.js";
-import errorMessage from "../classes/messages/errorMessage.js";
 import hostVersion from "../classes/details/hostVersion.js";
 import { folderExists } from "./FolderExists.js";
 
@@ -88,56 +87,66 @@ async function UpdateToLatest(
         `);
       console.log('[Updater] Row "install_id" has been inserted successfully');
     } catch (error) {
-      response_handler(
-        JSON.stringify([
-          request[0],
-          new errorMessage("Other", error, "Default").formatted(),
-        ])
-      );
+      throw error;
     }
   } else {
     install_id = await install_id;
   }
 
-  const fetchedData = await fetch(
-    `${repository_url}distributions/app/manifests/latest?install_id=${install_id}&channel=${release_channel}&platform=${platform}&arch=${arch}`
+  let currentHostVersion;
+
+  currentHostVersion = JSON.parse(
+    (
+      await db.runQuery(
+        `SELECT value FROM key_values WHERE key = "host/app/${release_channel}/${platform}/${arch}"`
+      )
+    )[0].value
+  )[0].host_version;
+
+  console.log(`[Updater] Current version: ${currentHostVersion}`);
+
+  if (!currentHostVersion) {
+    throw new Error("No hostVersion");
+  }
+
+  let response;
+
+  response = JSON.parse(
+    (
+      await db.runQuery(
+        `SELECT value FROM key_values WHERE key = "latest/host/app/${release_channel}/${platform}/${arch}"`
+      )
+    )[0].value
   );
-  const response = await fetchedData.json();
 
-  if (!updateFinished) {
-    // TODO: Delta updates require one version up, but tbh downloading full versions seems enough for now
-
-    /*
-
-    let hostVersion;
+  if (!response || response.full.host_version !== currentHostVersion) {
+    const fetchedData = await fetch(
+      `${repository_url}distributions/app/manifests/latest?install_id=${install_id}&channel=${release_channel}&platform=${platform}&arch=${arch}`
+    );
+    response = await fetchedData.json();
 
     try {
-      const result = await db.runQuery(
-        `SELECT value FROM key_values WHERE key = "host/app/${release_channel}/${platform}/${arch}"`
+      await db.runQuery(`
+    UPDATE key_values
+    SET value = "${response}"
+    WHERE key = "latest/host/app/${release_channel}/${platform}/${arch}"
+  `);
+      console.log(
+        `[Updater] Row "latest/host/app/${release_channel}/${platform}/${arch}" has been inserted successfully`
       );
-      hostVersion = JSON.parse(result[0].value)[0].host_version;
     } catch (error) {
-      response_handler(
-        JSON.stringify([
-          request[0],
-          new errorMessage("Other", error, "Default").formatted(),
-        ])
-      );
+      throw error;
     }
+  }
 
-    console.log(hostVersion)
+  if (!updateFinished) {
+    // TODO: Check if there is a delta update package, if there is, copy the whole current folder and install changes
+    // Full update current works though but will work on delta updating in the future
 
-    if (!hostVersion) {
-      response_handler(
-        JSON.stringify([
-          request[0],
-          new errorMessage("Other", "No hostVersion", "Default").formatted(),
-        ])
-      );
-      return
-    }
-
-    */
+    // TODO: update manifest in installer.db
+    // host/app/development/win/x86: add new host+modules version, it's sha256 hash and install state
+    // Discord Install States: PendingInstall, Installed, PendingDelete
+    // My extended states: PendingDownload, Downloaded, Deleted
 
     const newHostVersionDetails = {
       version: {
@@ -152,6 +161,8 @@ async function UpdateToLatest(
       package_sha256: response.full.package_sha256,
       url: response.full.url,
     };
+
+    // TODO: Remove HostDownload and HostInstall when Host version is latest
 
     let tasks: [[any], [any]] = [
       [
@@ -168,11 +179,11 @@ async function UpdateToLatest(
       ],
     ];
 
-    let modulesDetails: any[] = [];
+    let modulesVersionDetails: any[] = [];
 
     for (const module of response.required_modules) {
       const moduleData = response.modules[module].full;
-      modulesDetails.push({
+      modulesVersionDetails.push({
         version: new moduleVersion(
           newHostVersionDetails.version,
           module,
@@ -184,7 +195,7 @@ async function UpdateToLatest(
       });
     }
 
-    for (const module of modulesDetails) {
+    for (const module of modulesVersionDetails) {
       tasks[0].push({
         type: "ModuleDownload",
         ...module,
@@ -215,6 +226,8 @@ async function UpdateToLatest(
 
     const isFolderExist = folderExists(downloadFolder);
 
+    // TODO: Instead of removing folder after update failed, check if there are packages in the download folder and skip if sha256 matches
+
     switch (isFolderExist) {
       case false: {
         fs.mkdirSync(downloadFolder);
@@ -228,45 +241,24 @@ async function UpdateToLatest(
         break;
       }
       case "error": {
-        response_handler(
-          JSON.stringify([
-            request[0],
-            new errorMessage(
-              "Other",
-              JSON.stringify(isFolderExist),
-              "Default"
-            ).formatted(),
-          ])
-        );
+        throw isFolderExist;
       }
     }
 
     try {
       await processTasks();
     } catch (error) {
-      console.log(error);
-      response_handler(
-        JSON.stringify([
-          request[0],
-          new errorMessage(
-            "Other",
-            JSON.stringify(error),
-            "Default"
-          ).formatted(),
-        ])
-      );
+      throw error;
     }
 
-    // TODO: replace new manifest in installer.db
-
     response_handler(
-      JSON.stringify([request[0], { ManifestInfo: { ...fetchedData } }])
+      JSON.stringify([request[0], { ManifestInfo: { ...response } }])
     );
 
     updateFinished = true;
   } else {
     response_handler(
-      JSON.stringify([request[0], { ManifestInfo: { ...fetchedData } }])
+      JSON.stringify([request[0], { ManifestInfo: { ...response } }])
     );
   }
 

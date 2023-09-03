@@ -106,5 +106,5 @@ performDownload(
   url,
   root_path
 ).catch((error) => {
-  console.error("eh");
+  throw error
 });
