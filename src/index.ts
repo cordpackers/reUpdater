@@ -79,12 +79,36 @@ class Updater {
           );
           break;
         }
-        case "InstallModule" in request[1]:
-        case "QueryCurrentVersions"in request[1]:
+        case "InstallModule" in request[1]: {
+          break;
+        } // Downloads and installs additional modules after updating to latest version
+        case "Repair" in request[1]: {
+          break;
+        } // Never seen a repairing Discord before... maybe reinstall everything?
+        case "QueryCurrentVersions" in request[1]:
         case "CollectGarbage" in request[1]:
-        case "Repair" in request[1]: 
         case "SetManifests" in request[1]: {
-          // stubbed
+          // TODO: Implement stubbed commands
+        }
+      }
+    } catch (error) {
+      this.response_handler(
+        JSON.stringify([
+          request[0],
+          new errorMessage("Other", `${error}`, "Default").formatted(),
+        ])
+      );
+    }
+  }
+
+  command_blocking(rawRequest: string) {
+    const request = JSON.parse(rawRequest);
+    try {
+      switch (true) {
+        case "QueryCurrentVersions" in request[1]: // Same as the non-blocking one, idk why
+        case "SetManifests" in request[1]: {
+          // TODO: Implement stubbed commands
+          // Apparently it returns "OK" and only handle Pinned ones. Haven't seen it before though.
         }
       }
     } catch (error) {
@@ -97,17 +121,13 @@ class Updater {
     }
   }
 
-  command_blocking(rawRequest: string) {
-    const request = JSON.parse(rawRequest);
-    // non async blocking command
-  }
-
   known_folder(name: string) {
-    // returns Desktop or Start Menu
+    // TODO: Returns Desktop or Start Menu
+    return "";
   }
 
   create_shortcut(options: any) {
-    // creates a shortcut on both Desktop or Start Menu if not exist
+    // TODO: creates a shortcut on both Desktop or Start Menu if not exist
   }
 }
 

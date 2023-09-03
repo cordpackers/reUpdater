@@ -1,60 +1,12 @@
-import { Worker } from "worker_threads";
-import path from "path";
 import crypto from "crypto";
 import * as fs from "fs";
 
 import moduleVersion from "../classes/details/moduleVersion.js";
 import { SQLiteDB } from "../classes/database.js";
 import hostVersion from "../classes/details/hostVersion.js";
-import { folderExists } from "../utils/FolderExists.js";
-
-function runThread(
-  task: any,
-  workerData: any,
-  response_handler: (arg0: string) => void,
-  request: any[]
-) {
-  let workerScriptPath: any = "";
-
-  switch (task.type) {
-    case "HostDownload":
-    case "ModuleDownload": {
-      workerScriptPath = path.join(__dirname, "..", "workers", "download.js");
-      break;
-    }
-    case "HostInstall":
-    case "ModuleInstall": {
-      workerScriptPath = path.join(
-        __dirname,
-        "..",
-        "workers",
-        "extractAndInstall.js"
-      );
-    }
-  }
-
-  return new Promise<void>((resolve, reject) => {
-    const worker = new Worker(workerScriptPath, { workerData });
-
-    worker.on("message", (message) => {
-      const stringMessage = JSON.stringify(message);
-      response_handler(JSON.stringify([request[0], { TaskProgress: message }]));
-      if (stringMessage.includes("Complete")) {
-        resolve();
-      }
-    });
-
-    worker.on("error", (error) => {
-      reject(error);
-    });
-
-    worker.on("exit", (code) => {
-      if (code !== 0) {
-        reject(new Error(`Worker stopped with exit code ${code}`));
-      }
-    });
-  });
-}
+import { runThread } from "../utils/runThread.js";
+import { createFolder } from "../utils/createFolder.js";
+import fetch from "../compat/fetch.js";
 
 async function UpdateToLatest(
   response_handler: any,
@@ -146,7 +98,7 @@ async function UpdateToLatest(
     // TODO: update manifest in installer.db
     // host/app/development/win/x86: add new host+modules version, it's sha256 hash and install state
     // Discord Install States: PendingInstall, Installed, PendingDelete
-    // My extended states: PendingDownload, Downloaded, Deleted
+    // My extended states: PendingDownload, Downloaded
 
     const newHostVersionDetails = {
       version: {
@@ -161,8 +113,6 @@ async function UpdateToLatest(
       package_sha256: response.full.package_sha256,
       url: response.full.url,
     };
-
-    // TODO: Remove HostDownload and HostInstall when Host version is latest
 
     let tasks: [[any], [any]] = [
       [
@@ -224,24 +174,20 @@ async function UpdateToLatest(
     const downloadFolder = `${root_path}\\download`;
     const incomingFolder = `${root_path}\\download\\incoming`;
 
-    const isFolderExist = folderExists(downloadFolder);
-
     // TODO: Instead of removing folder after update failed, check if there are packages in the download folder and skip if sha256 matches
 
-    switch (isFolderExist) {
-      case false: {
-        fs.mkdirSync(downloadFolder);
-        fs.mkdirSync(incomingFolder);
+    const isDownloadFolderExists = createFolder(downloadFolder);
+
+    switch (isDownloadFolderExists) {
+      case "folderExists": {
+        fs.rm(downloadFolder, { recursive: true, force: true }, () => { });
+        createFolder(downloadFolder);
+        createFolder(incomingFolder);
         break;
       }
-      case true: {
-        fs.rmSync(downloadFolder, { force: true, recursive: true });
-        fs.mkdirSync(downloadFolder);
-        fs.mkdirSync(incomingFolder);
+      default: {
+        createFolder(incomingFolder);
         break;
-      }
-      case "error": {
-        throw isFolderExist;
       }
     }
 
@@ -261,8 +207,6 @@ async function UpdateToLatest(
       JSON.stringify([request[0], { ManifestInfo: { ...response } }])
     );
   }
-
-  //db.close();
 }
 
 export = UpdateToLatest;

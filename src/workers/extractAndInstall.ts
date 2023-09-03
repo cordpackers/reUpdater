@@ -4,7 +4,8 @@ import path from "path";
 import zlib from "zlib";
 import tar from "tar-fs";
 
-import TaskProgressDetail from "../classes/messages/taskProgress";
+import TaskProgressDetail from "../classes/messages/taskProgress.js";
+import { createFolder } from "../utils/createFolder.js";
 
 function waitForFolder(folderPath: any, intervalMs: number) {
   function checkFolder() {
@@ -61,13 +62,9 @@ async function handleExtract(
       parentPort?.postMessage(task.formatted());
 
       const outputFolder = `${root_path}\\app-${version.version.join(".")}\\`;
-      try {
-        fs.mkdirSync(outputFolder);
-      } catch (error: any) {
-        if (error.code !== "EEXIST") {
-          throw error;
-        }
-      }
+
+      createFolder(outputFolder)
+
       extractTar(filePath, outputFolder);
 
       break;
@@ -85,27 +82,9 @@ async function handleExtract(
 
       waitForFolder(path.join(root_path, `app-${hostVersion}`), 1000);
 
-      try {
-        fs.mkdirSync(modulesFolder);
-      } catch (error: any) {
-        if (error.code !== "EEXIST") {
-          throw error;
-        }
-      }
-      try {
-        fs.mkdirSync(outputParentFolder);
-      } catch (error: any) {
-        if (error.code !== "EEXIST") {
-          throw error;
-        }
-      }
-      try {
-        fs.mkdirSync(outputFolder);
-      } catch (error: any) {
-        if (error.code !== "EEXIST") {
-          throw error;
-        }
-      }
+      createFolder(modulesFolder)
+      createFolder(outputParentFolder)
+      createFolder(outputFolder)
 
       extractTar(filePath, outputFolder);
     }

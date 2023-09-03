@@ -2,7 +2,8 @@ import { parentPort, workerData } from "worker_threads";
 import * as fs from "fs";
 import path from "path";
 
-import TaskProgressDetail from "../classes/messages/taskProgress";
+import TaskProgressDetail from "../classes/messages/taskProgress.js";
+import fetch from "../compat/fetch.js";
 
 async function downloadFile(
   url: string,
