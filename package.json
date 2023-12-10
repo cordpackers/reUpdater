@@ -27,6 +27,6 @@
   "dependencies": {
     "sqlite3": "^5.1.6",
     "tar-fs": "^3.0.4",
-    "undici": "^5.23.0"
+    "undici": "^5.26.2"
   }
 }
