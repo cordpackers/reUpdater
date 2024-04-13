@@ -40,6 +40,6 @@ Multithreading. That's it. As I want to keep it 100% compatible with `app.asar`,
 
 ## Would this be available to macOS/Linux users?
 
-**No.**
+**Maybe.**
 
-As stated above, this relies on and modifies `installer.db` which is exclusive to (Discord's modified) Squirrel.Windows, which is Windows only.
+As stated above, this relies on and modifies `installer.db` which is exclusive to (Discord's modified) Squirrel.Windows, which is Windows only, although someone can make a custom installer that creates it.

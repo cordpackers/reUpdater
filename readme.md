@@ -29,6 +29,4 @@ Currently it's hard to estimate. And as it's in alpha it's not 100% usable yet. 
 4. Go to `discordDir/app-latest.version.here/`, delete (or rename) the `updater.node` file and create a folder named `updater`. 
 5. Copy `dist`, `node_modules` and `package.json` inside.
 
-(You must use npm and 32 bit version of Node! Use a switcher like nvm-windows or nvs if you want to keep your 64 bit version)
-
 Alternatively you can package this with a repacker. (recommended method if you want to test)
