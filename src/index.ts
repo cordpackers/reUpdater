@@ -83,7 +83,10 @@ class Updater {
         case "Repair" in request[1]: {
           break;
         } // Never seen a repairing Discord before... maybe reinstall everything?
-        case "QueryCurrentVersions" in request[1]:
+        case "QueryCurrentVersions" in request[1]: {
+          // TODO: Get current module/host versions
+          break;
+        }
         case "CollectGarbage" in request[1]:
         case "SetManifests" in request[1]: {
           // TODO: Implement stubbed commands

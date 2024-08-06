@@ -23,7 +23,7 @@
     - [ ] Show task progress
 
 - [ ] QueryCurrentVersions
-    - [ ] Send updated versions
+    - [ ] Send current module/hosts versions from server
 
 ## New features
 - [ ] Install locally without Internet (full package install)
