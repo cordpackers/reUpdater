@@ -2,6 +2,10 @@
 
 For all the questions.
 
+## Why?
+
+Originally I wanted to make my own Discord client which (at least on the non-modules side) is open source 1:1 with the official Discord client, I abandoned it after realizing it's too much work. However still it has purposes somewhere.
+
 ## What is updater.node?
 
 `updater.node` is a node addon of `app.asar` that interacts with Discord's update server and installs updates. 

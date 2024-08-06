@@ -25,6 +25,10 @@
 - [ ] QueryCurrentVersions
     - [ ] Send updated versions
 
+## New features
+- [ ] Install locally without Internet (full package install)
+- [ ] Disable updates
+
 ## Stubbed commands
 
 `SetManifests`, `Repair`, `CollectGarbage`
