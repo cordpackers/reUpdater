@@ -1,5 +1,5 @@
 import { parentPort, workerData } from "worker_threads";
-import * as fs from "fs";
+import fs from "fs-extra";
 import path from "path";
 
 import TaskProgressDetail from "../classes/messages/taskProgress.js";
@@ -89,7 +89,7 @@ async function performDownload(
 
   await downloadFile(
     url,
-    `${root_path}\\download\\incoming\\.tmp${generate_id(6)}`,
+    path.join(root_path, "download", "incoming", `.tmp${generate_id(6)}`),
     package_sha256,
     task,
     parentPort

@@ -1,7 +1,7 @@
 import { Worker } from "worker_threads";
 import path from "path";
 
-function runThread(
+async function runThread(
   task: any,
   workerData: any,
   response_handler: (arg0: string) => void,
@@ -26,14 +26,31 @@ function runThread(
     }
   }
 
-  return new Promise<void>((resolve, reject) => {
+  return new Promise<any>((resolve, reject) => {
+    let sendToDB: any;
     const worker = new Worker(workerScriptPath, { workerData });
 
-    worker.on("message", (message) => {
+    worker.on("message", async (message) => {
       const stringMessage = JSON.stringify(message);
-      response_handler(JSON.stringify([request[0], { TaskProgress: message }]));
+      if (stringMessage.includes("sendToDB")) {
+        sendToDB = message.sendToDB;
+      } else {
+        response_handler(
+          JSON.stringify([request[0], { TaskProgress: message }])
+        );
+      }
       if (stringMessage.includes("Complete")) {
-        resolve();
+        switch (task.type) {
+          case "HostDownload":
+          case "ModuleDownload": {
+            resolve(false);
+            break;
+          }
+          case "HostInstall":
+          case "ModuleInstall": {
+            resolve(sendToDB)
+          }
+        }
       }
     });
 

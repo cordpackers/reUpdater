@@ -1,11 +1,12 @@
 import { parentPort, workerData } from "worker_threads";
-import * as fs from "fs";
+import fs from "fs-extra";
 import path from "path";
 import zlib from "zlib";
-import tar from "tar-fs";
+import tar_fs from "tar-fs";
 
 import TaskProgressDetail from "../classes/messages/taskProgress.js";
 import { createFolder } from "../utils/createFolder.js";
+import { once } from "stream";
 
 function waitForFolder(folderPath: any, intervalMs: number) {
   function checkFolder() {
@@ -27,24 +28,18 @@ function waitForFolder(folderPath: any, intervalMs: number) {
   checkFolder();
 }
 
-function extractTar(tarballPath: string, outputFolder: string) {
+function extractTar(tarballPath: string, extractFolder: string) {
   const compressedTarball = fs.createReadStream(tarballPath);
 
   const decompressedTarball = zlib.createBrotliDecompress();
 
-  const extract = tar.extract(outputFolder, {
-    ignore(name) {
-      return name.includes("delta_manifest.json");
-    },
-    map(header) {
-      header.name = header.name.replace(/files\//, "");
-      return header;
-    },
-  });
+  const extract = tar_fs.extract(extractFolder);
 
-  compressedTarball.pipe(decompressedTarball).pipe(extract);
+  const stream = compressedTarball
+    .pipe(decompressedTarball)
+    .pipe(extract, { end: true });
 
-  console.log("[Updater] Tarball extraction completed successfully.");
+  return stream;
 }
 
 async function handleExtract(
@@ -55,6 +50,10 @@ async function handleExtract(
   task: TaskProgressDetail,
   parentPort: any
 ) {
+  let outputFolder: any;
+  let extractFolder: any;
+  let stream;
+
   switch (type) {
     case "HostInstall": {
       task.state = "Working";
@@ -63,11 +62,13 @@ async function handleExtract(
 
       parentPort?.postMessage(task.formatted());
 
-      const outputFolder = `${root_path}\\app-${version.version.join(".")}\\`;
+      extractFolder = path.join(root_path, "temp");
+      outputFolder = path.join(root_path, `app-${version.version.join(".")}`);
 
+      createFolder(extractFolder);
       createFolder(outputFolder);
 
-      extractTar(filePath, outputFolder);
+      stream = extractTar(filePath, extractFolder);
 
       break;
     }
@@ -80,19 +81,55 @@ async function handleExtract(
 
       const hostVersion = version.module.host_version.version.join(".");
 
-      const modulesFolder = `${root_path}\\app-${hostVersion}\\modules\\`;
-      const outputParentFolder = `${modulesFolder}\\${version.module.name}-${version.version}`;
-      const outputFolder = `${outputParentFolder}\\${version.module.name}`;
+      const modulesFolder = path.join(
+        root_path,
+        `app-${hostVersion}`,
+        "modules"
+      );
+      extractFolder = path.join(
+        modulesFolder,
+        `${version.module.name}-${version.version}`
+      );
+      outputFolder = path.join(extractFolder, version.module.name);
 
-      waitForFolder(path.join(root_path, `app-${hostVersion}`), 1000);
+      waitForFolder(path.join(root_path, `app-${hostVersion}`), 3000);
 
       createFolder(modulesFolder);
-      createFolder(outputParentFolder);
-      createFolder(outputFolder);
+      createFolder(extractFolder);
 
-      extractTar(filePath, outputFolder);
+      stream = extractTar(filePath, extractFolder);
     }
   }
+
+  if (stream) {
+    await once(stream, "finish");
+    try {
+      const delta_manifest = JSON.parse(fs.readFileSync(
+        path.join(extractFolder, "delta_manifest.json"),
+        { encoding: "utf8" }
+      ));
+      parentPort?.postMessage({
+        sendToDB: {
+          type: type,
+          version: version,
+          delta_manifest: delta_manifest,
+        },
+      });
+      fs.moveSync(path.join(extractFolder, "files"), outputFolder);
+      switch (type) {
+        case "HostInstall": {
+          fs.rmdirSync(extractFolder);
+          break;
+        }
+        case "ModuleInstall": {
+          fs.rmSync(path.join(extractFolder, "delta_manifest.json"));
+        }
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  }
+
   task.state = "Complete";
   task.progress = 100.0;
   task.bytes = 0;
@@ -125,7 +162,7 @@ async function performInstall(
 
   await handleExtract(
     type,
-    `${root_path}\\download\\${package_sha256}`,
+    path.join(root_path, "download", package_sha256),
     root_path,
     version,
     task,
@@ -133,8 +170,17 @@ async function performInstall(
   );
 }
 
-const { type, version, from_version, package_sha256, url, root_path } =
-  workerData;
+const {
+  type,
+  version,
+  from_version,
+  package_sha256,
+  url,
+  root_path,
+  release_channel,
+  platform,
+  arch,
+} = workerData;
 
 performInstall(
   type,

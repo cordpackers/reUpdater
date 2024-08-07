@@ -1,5 +1,6 @@
 import crypto from "crypto";
-import * as fs from "fs";
+import fs from "fs-extra";
+import path from "path";
 
 import moduleVersion from "../classes/details/moduleVersion.js";
 import { SQLiteDB } from "../classes/database.js";
@@ -45,16 +46,18 @@ async function UpdateToLatest(
     install_id = await install_id;
   }
 
-  let currentHostVersion;
+  let installedHostsAndModules: any;
   let needUpdateLatestHost = true; // assume that it needed updating
 
-  currentHostVersion = JSON.parse(
+  installedHostsAndModules = JSON.parse(
     (
       await db.runQuery(
         `SELECT value FROM key_values WHERE key = "host/app/${release_channel}/${platform}/${arch}"`
       )
     )[0].value
-  )[0].host_version.version;
+  )[0];
+
+  const currentHostVersion = installedHostsAndModules.host_version.version;
 
   console.log(`[Updater] Current version: ${currentHostVersion}`);
 
@@ -78,10 +81,7 @@ async function UpdateToLatest(
     )
   ).json();
 
-  if (
-    !response ||
-    JSON.stringify(response) !== JSON.stringify(fetchedData)
-  ) {
+  if (!response || JSON.stringify(response) !== JSON.stringify(fetchedData)) {
     response = fetchedData;
 
     try {
@@ -98,8 +98,13 @@ async function UpdateToLatest(
     }
   }
 
-  if (JSON.stringify(fetchedData.full.host_version) === JSON.stringify(currentHostVersion)) {
-    console.log(`[Updater] Host update skipped, running on latest host version.`)
+  if (
+    JSON.stringify(fetchedData.full.host_version) ===
+    JSON.stringify(currentHostVersion)
+  ) {
+    console.log(
+      `[Updater] Host update skipped, running on latest host version.`
+    );
     needUpdateLatestHost = false;
   }
 
@@ -107,11 +112,10 @@ async function UpdateToLatest(
     // TODO: Check if there is a delta update package, if there is, copy the whole current folder and install changes
     // Full update current works though but will work on delta updating in the future
 
-    // TODO: update manifest in installer.db
+    // TODO: Update Install states as it installs, or deletes. Maybe PendingInstall is redundant in this reimplementation?
     // host/app/development/win/x86: add new host+modules version, it's sha256 hash and install state
     // remove if folder not exist
     // Discord Install States: PendingInstall, Installed, PendingDelete
-    // My extended states: PendingDownload, Downloaded
 
     const newHostVersionDetails = {
       version: {
@@ -172,18 +176,40 @@ async function UpdateToLatest(
         const taskPromises = task.map((task: any) =>
           runThread(
             task,
-            { ...task, root_path: root_path },
+            {
+              ...task,
+              root_path: root_path,
+              release_channel: release_channel,
+              platform: platform,
+              arch: arch,
+            },
             response_handler,
             request
           )
         );
-
-        await Promise.all(taskPromises);
+        const result = (await Promise.all(taskPromises));
+        if (result) {
+          for (const hostOrModule of result) {
+            switch (hostOrModule.type) {
+              case "HostInstall": {
+                installedHostsAndModules.host_version = hostOrModule.version
+                installedHostsAndModules.distro_manifest = hostOrModule.delta_manifest
+              }
+              case "ModuleInstall": {
+                installedHostsAndModules.modules.push({
+                  module_version: hostOrModule.version,
+                  distro_manifest: hostOrModule.delta_manifest,
+                  install_state: "Installed"
+                })
+              }
+            }
+          }
+        }
       }
     }
 
-    const downloadFolder = `${root_path}\\download`;
-    const incomingFolder = `${root_path}\\download\\incoming`;
+    const downloadFolder = path.join(root_path, "download");
+    const incomingFolder = path.join(downloadFolder, "incoming");
 
     // TODO: Instead of removing folder after update failed, check if there are packages in the download folder and skip if sha256 matches
 
@@ -202,8 +228,17 @@ async function UpdateToLatest(
       }
     }
 
+    await processTasks();
+
     try {
-      await processTasks();
+      await db.runQuery(`
+    UPDATE key_values
+    SET value = '[${JSON.stringify(installedHostsAndModules)}]'
+    WHERE key = "host/app/${release_channel}/${platform}/${arch}"
+  `);
+      console.log(
+        `[Updater] Row "host/app/${release_channel}/${platform}/${arch}" has been inserted successfully`
+      );
     } catch (error) {
       throw error;
     }

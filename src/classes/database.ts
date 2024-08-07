@@ -1,7 +1,7 @@
 import * as sqlite3 from "sqlite3";
 
 class SQLiteDB {
-  private db: sqlite3.Database;
+  db: sqlite3.Database;
 
   constructor(dbPath: string) {
     this.db = new sqlite3.Database(dbPath, (err) => {

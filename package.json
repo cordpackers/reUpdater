@@ -19,12 +19,14 @@
   },
   "homepage": "https://github.com/modulocord/reUpdater#readme",
   "devDependencies": {
+    "@types/fs-extra": "^11.0.4",
     "@types/node": "^22.1.0",
     "@types/tar-fs": "^2.0.4",
     "rimraf": "^6.0.1",
     "typescript": "^5.5.4"
   },
   "dependencies": {
+    "fs-extra": "^11.2.0",
     "sqlite3": "^5.1.7",
     "tar-fs": "^3.0.6",
     "undici": "^6.19.5"
