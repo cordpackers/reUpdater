@@ -1,0 +1,1 @@
+// TODO: Move installed manifests setting to here and make PendingInstall in UpdateToLatest

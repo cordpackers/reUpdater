@@ -12,7 +12,7 @@
     - [x] Download full packages
     - [ ] Download delta packages
     - [x] Install packages
-    - [ ] Update `installer.db` states
+    - [x] Update `installer.db` states
     - [x] Show task progress
     - [x] Return Manifest info when done
 
@@ -25,12 +25,15 @@
 - [ ] QueryCurrentVersions
     - [ ] Send current module/hosts versions from server
 
+- [ ] SetManifests
+    - [ ] Update `installer.db` states
+
 ## New features
 - [ ] Install locally without Internet (full package install)
 - [ ] Disable updates
 
 ## Stubbed commands
 
-`SetManifests`, `Repair`, `CollectGarbage`
+`Repair`, `CollectGarbage`
 
 Those will not do anything and will just return `[(TaskID), "Ok"]`

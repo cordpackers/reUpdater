@@ -112,6 +112,8 @@ async function UpdateToLatest(
     // TODO: Check if there is a delta update package, if there is, copy the whole current folder and install changes
     // Full update current works though but will work on delta updating in the future
 
+    // TODO: Move setting Installed manifest to SetManifest command. Maybe that's how PendingInstall install state exists
+
     // TODO: Update Install states as it installs, or deletes. Maybe PendingInstall is redundant in this reimplementation?
     // host/app/development/win/x86: add new host+modules version, it's sha256 hash and install state
     // remove if folder not exist
