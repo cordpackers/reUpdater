@@ -46,6 +46,7 @@ async function UpdateToLatest(
   }
 
   let currentHostVersion;
+  let needUpdateLatestHost = true; // assume that it needed updating
 
   currentHostVersion = JSON.parse(
     (
@@ -79,8 +80,7 @@ async function UpdateToLatest(
 
   if (
     !response ||
-    response.full.host_version !== currentHostVersion ||
-    response !== fetchedData
+    JSON.stringify(response) !== JSON.stringify(fetchedData)
   ) {
     response = fetchedData;
 
@@ -96,6 +96,11 @@ async function UpdateToLatest(
     } catch (error) {
       throw error;
     }
+  }
+
+  if (JSON.stringify(fetchedData.full.host_version) === JSON.stringify(currentHostVersion)) {
+    console.log(`[Updater] Host update skipped, running on latest host version.`)
+    needUpdateLatestHost = false;
   }
 
   if (!updater.updateFinished) {
@@ -122,22 +127,20 @@ async function UpdateToLatest(
       url: response.full.url,
     };
 
-    let tasks: [[any], [any]] = [
-      [
-        {
-          type: "HostDownload",
-          ...newHostVersionDetails,
-        },
-      ],
-      [
-        {
-          type: "HostInstall",
-          ...newHostVersionDetails,
-        },
-      ],
-    ];
+    let tasks: [object[], object[]] = [[], []];
 
-    let modulesVersionDetails: any[] = [];
+    if (needUpdateLatestHost) {
+      tasks[0].push({
+        type: "HostDownload",
+        ...newHostVersionDetails,
+      });
+      tasks[1].push({
+        type: "HostInstall",
+        ...newHostVersionDetails,
+      });
+    }
+
+    let modulesVersionDetails: object[] = [];
 
     for (const module of response.required_modules) {
       const moduleData = response.modules[module].full;
