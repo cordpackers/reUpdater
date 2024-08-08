@@ -33,6 +33,7 @@
 ## New features
 - [ ] Install locally without Internet (full package install)
 - [ ] Disable updates
+- [ ] Parallel Download and Install
 
 ## Stubbed commands
 
