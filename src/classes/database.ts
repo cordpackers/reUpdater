@@ -1,39 +1,27 @@
-import * as sqlite3 from "sqlite3";
+import Database, * as BetterSqlite3 from "better-sqlite3";
 
 class SQLiteDB {
-  db: sqlite3.Database;
+  db!: BetterSqlite3.Database;
 
   constructor(dbPath: string) {
-    this.db = new sqlite3.Database(dbPath, (err) => {
-      if (err) {
-        console.error("[Updater] Error opening database:", err.message);
-      } else {
-        console.log("[Updater] Connected to the database");
-      }
-    });
+    this.db = new Database(dbPath);
+    console.log(this.db);
+    console.log("[Updater] Connected to the database");
   }
 
-  async runQuery(query: string, params: any[] = []): Promise<any[]> {
-    return new Promise<any[]>((resolve, reject) => {
-      this.db.all(query, params, (err, rows) => {
-        if (err) {
-          reject(err.message);
-        } else {
-          resolve(rows);
-        }
-      });
-    });
+  runQuery(query: string, params: any[] = []): any {
+    const stmt = this.db.prepare(query);
+    if (query.trim().toUpperCase().startsWith("SELECT")) {
+      return stmt.all(...params);
+    } else {
+      stmt.run(...params);
+    }
   }
 
   close(): void {
-    this.db.close((err) => {
-      if (err) {
-        console.error("[Updater] Error closing database:", err.message);
-      } else {
-        console.log("[Updater] Database connection closed");
-      }
-    });
+    this.db.close();
+    console.log("[Updater] Database connection closed");
   }
 }
 
-export {SQLiteDB}
+export { SQLiteDB };

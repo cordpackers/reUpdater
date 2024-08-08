@@ -3,6 +3,9 @@ import path from "path";
 import { SQLiteDB } from "./classes/database.js";
 import UpdateToLatest from "./commands/UpdateToLatest.js";
 import errorMessage from "./classes/messages/errorMessage.js";
+import { QueryCurrentVersions } from "./commands/QueryCurrentVersions.js";
+import { SetManifests } from "./commands/SetManifests.js";
+import { CollectGarbage } from "./commands/CollectGarbage.js";
 
 class Updater {
   response_handler: any;
@@ -10,10 +13,12 @@ class Updater {
   platform: any;
   repository_url: any;
   root_path: any;
+  user_data_path: any;
   db: SQLiteDB;
   arch: () => "x64" | "x86" | undefined;
   install_id: () => any;
   updateFinished: boolean;
+  isRunningUpdate: any | undefined;
 
   constructor(options: {
     response_handler: any;
@@ -21,32 +26,41 @@ class Updater {
     platform: any;
     repository_url: any;
     root_path: any;
+    current_os_arch: any | undefined;
+    user_data_path: any;
   }) {
     this.response_handler = options.response_handler;
     this.release_channel = options.release_channel;
     this.platform = options.platform;
     this.repository_url = options.repository_url;
     this.root_path = options.root_path;
+    this.user_data_path = options.user_data_path;
+
     this.db = new SQLiteDB(path.join(this.root_path, "installer.db"));
     this.arch = () => {
-      switch (process.arch) {
-        case "x64": {
-          return "x64";
-        }
-        case "ia32": {
-          return "x86";
+      if (options.current_os_arch) {
+        return options.current_os_arch;
+      } else {
+        switch (process.arch) {
+          case "x64": {
+            return "x64";
+          }
+          case "ia32": {
+            return "x86";
+          }
         }
       }
     };
-    this.install_id = async () => {
+    this.install_id = () => {
       let install_id: any = "";
 
-      try {
-        const result = await this.db.runQuery(
-          'SELECT value FROM key_values WHERE key = "install_id"'
-        );
+      const result = this.db.runQuery(
+        `SELECT value FROM key_values WHERE key = 'install_id'`
+      );
+
+      if (result.length !== 0) {
         install_id = result[0].value.slice(1, -1);
-      } catch (error) {
+      } else {
         console.log(`[Updater]: install_id key does not exist. Nulling...`);
         install_id = null;
       }
@@ -57,11 +71,21 @@ class Updater {
   }
 
   async command(rawRequest: string) {
+    let taskText;
     const request = JSON.parse(rawRequest);
+    if (typeof request[1] === "object") {
+      taskText = Object.keys(request[1])[0];
+    } else {
+      taskText = request[1];
+    }
     try {
-      switch (true) {
-        case "UpdateToLatest" in request[1]: {
-          await UpdateToLatest(
+      switch (taskText) {
+        case "CollectGarbage": {
+          CollectGarbage(this.response_handler, request, this);
+          break;
+        }
+        case "UpdateToLatest": {
+          UpdateToLatest(
             this.response_handler,
             request,
             {
@@ -73,23 +97,35 @@ class Updater {
               arch: this.arch(),
               install_id: this.install_id(),
             },
-            this
+            this,
+            request[1].UpdateToLatest.options
           );
           break;
         }
-        case "InstallModule" in request[1]: {
+        case "InstallModule": {
           break;
         } // Downloads and installs additional modules after updating to latest version
-        case "Repair" in request[1]: {
+        case "Repair": {
           break;
         } // Never seen a repairing Discord before... maybe reinstall everything?
-        case "QueryCurrentVersions" in request[1]: {
-          // TODO: Get current module/host versions
+        case "QueryCurrentVersions": {
+          QueryCurrentVersions(
+            this.response_handler,
+            request,
+            {
+              release_channel: this.release_channel,
+              platform: this.platform,
+              db: this.db,
+              arch: this.arch(),
+            },
+            this,
+            request[1].QueryCurrentVersions.options,
+            false
+          );
           break;
         }
-        case "CollectGarbage" in request[1]:
-        case "SetManifests" in request[1]: {
-          // TODO: Implement stubbed commands
+        case "SetManifests": {
+          SetManifests(this.response_handler, request, false);
         }
       }
     } catch (error) {
@@ -103,22 +139,32 @@ class Updater {
   }
 
   command_blocking(rawRequest: string) {
+    let taskText;
     const request = JSON.parse(rawRequest);
-    try {
-      switch (true) {
-        case "QueryCurrentVersions" in request[1]: // Same as the non-blocking one, idk why
-        case "SetManifests" in request[1]: {
-          // TODO: Implement stubbed commands
-          // Apparently it returns "OK" and only handle Pinned ones. Haven't seen it before though.
-        }
+    if (typeof request[1] === "object") {
+      taskText = Object.keys(request[1])[0];
+    } else {
+      taskText = request[1];
+    }
+    switch (taskText) {
+      case "QueryCurrentVersions": {
+        return QueryCurrentVersions(
+          this.response_handler,
+          request,
+          {
+            release_channel: this.release_channel,
+            platform: this.platform,
+            db: this.db,
+            arch: this.arch(),
+          },
+          this,
+          request[1].QueryCurrentVersions.options,
+          true
+        );
       }
-    } catch (error) {
-      this.response_handler(
-        JSON.stringify([
-          request[0],
-          new errorMessage("Other", error, "Default").formatted(),
-        ])
-      );
+      case "SetManifests": {
+        return SetManifests(this.response_handler, request, true);
+      }
     }
   }
 
@@ -130,11 +176,10 @@ class Updater {
   create_shortcut(options: any) {
     // TODO: creates a shortcut on both Desktop or Start Menu if not exist
   }
-
 }
 
 console.log(
-  "[Updater] reUpdater v0.1.0 - Javascript-based updater.node replacement"
+  "[Updater] reUpdater v0.5.0 - Javascript-based updater.node replacement"
 );
 
 export = {

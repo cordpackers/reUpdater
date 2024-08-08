@@ -1,5 +1,11 @@
 # Roadmap
 
+## Features
+
+- [x] New install
+- [ ] Update host
+- [ ] Update modules
+
 ## Reimplemented functions
 
 - [x] command
@@ -22,11 +28,7 @@
     - [ ] Update `installer.db` states
     - [ ] Show task progress
 
-- [ ] QueryCurrentVersions
-    - [ ] Send current module/hosts versions from server
-
-- [ ] SetManifests
-    - [ ] Update `installer.db` states
+- [x] QueryCurrentVersions
 
 ## New features
 - [ ] Install locally without Internet (full package install)
@@ -34,6 +36,6 @@
 
 ## Stubbed commands
 
-`Repair`, `CollectGarbage`
+`SetManifests`, `Repair`, `CollectGarbage`
 
 Those will not do anything and will just return `[(TaskID), "Ok"]`

@@ -29,31 +29,32 @@ async function UpdateToLatest(
     arch: any;
     install_id: any;
   },
-  updater: any
+  updater: any,
+  options: any
 ) {
-  if (!(await install_id)) {
+  let currentModules: any[] = [];
+
+  if (!install_id) {
     install_id = crypto.randomUUID();
     try {
-      await db.runQuery(`
+      db.runQuery(`
           INSERT INTO key_values (key, value)
-          VALUES ("install_id", '"${install_id}"')
+          VALUES ('install_id', '"${install_id}"')
         `);
       console.log('[Updater] Row "install_id" has been inserted successfully');
     } catch (error) {
       throw error;
     }
   } else {
-    install_id = await install_id;
+    install_id = install_id;
   }
 
   let installedHostsAndModules: any;
   let needUpdateLatestHost = true; // assume that it needed updating
 
   installedHostsAndModules = JSON.parse(
-    (
-      await db.runQuery(
-        `SELECT value FROM key_values WHERE key = "host/app/${release_channel}/${platform}/${arch}"`
-      )
+    db.runQuery(
+      `SELECT value FROM key_values WHERE key = 'host/app/${release_channel}/${platform}/${arch}'`
     )[0].value
   )[0];
 
@@ -68,10 +69,8 @@ async function UpdateToLatest(
   let response;
 
   response = JSON.parse(
-    (
-      await db.runQuery(
-        `SELECT value FROM key_values WHERE key = "latest/host/app/${release_channel}/${platform}/${arch}"`
-      )
+    db.runQuery(
+      `SELECT value FROM key_values WHERE key = 'latest/host/app/${release_channel}/${platform}/${arch}'`
     )[0].value
   );
 
@@ -85,10 +84,10 @@ async function UpdateToLatest(
     response = fetchedData;
 
     try {
-      await db.runQuery(`
+      db.runQuery(`
     UPDATE key_values
     SET value = '${JSON.stringify(response)}'
-    WHERE key = "latest/host/app/${release_channel}/${platform}/${arch}"
+    WHERE key = 'latest/host/app/${release_channel}/${platform}/${arch}'
   `);
       console.log(
         `[Updater] Row "latest/host/app/${release_channel}/${platform}/${arch}" has been inserted successfully`
@@ -106,6 +105,22 @@ async function UpdateToLatest(
       `[Updater] Host update skipped, running on latest host version.`
     );
     needUpdateLatestHost = false;
+  }
+
+  for (const module of installedHostsAndModules.modules) {
+    currentModules.push(module.module_version.module.name);
+  }
+
+  console.log(JSON.stringify(currentModules));
+  console.log(JSON.stringify(fetchedData.required_modules));
+
+  if (
+    !needUpdateLatestHost &&
+    currentModules.some((element) =>
+      fetchedData.required_modules.includes(element)
+    )
+  ) {
+    updater.updateFinished = true;
   }
 
   if (!updater.updateFinished) {
@@ -189,20 +204,21 @@ async function UpdateToLatest(
             request
           )
         );
-        const result = (await Promise.all(taskPromises));
+        const result = Promise.all(taskPromises);
         if (result) {
-          for (const hostOrModule of result) {
+          for (const hostOrModule of await result) {
             switch (hostOrModule.type) {
               case "HostInstall": {
-                installedHostsAndModules.host_version = hostOrModule.version
-                installedHostsAndModules.distro_manifest = hostOrModule.delta_manifest
+                installedHostsAndModules.host_version = hostOrModule.version;
+                installedHostsAndModules.distro_manifest =
+                  hostOrModule.delta_manifest;
               }
               case "ModuleInstall": {
                 installedHostsAndModules.modules.push({
                   module_version: hostOrModule.version,
                   distro_manifest: hostOrModule.delta_manifest,
-                  install_state: "Installed"
-                })
+                  install_state: "Installed",
+                });
               }
             }
           }
@@ -233,10 +249,10 @@ async function UpdateToLatest(
     await processTasks();
 
     try {
-      await db.runQuery(`
+      db.runQuery(`
     UPDATE key_values
     SET value = '[${JSON.stringify(installedHostsAndModules)}]'
-    WHERE key = "host/app/${release_channel}/${platform}/${arch}"
+    WHERE key = 'host/app/${release_channel}/${platform}/${arch}'
   `);
       console.log(
         `[Updater] Row "host/app/${release_channel}/${platform}/${arch}" has been inserted successfully`
