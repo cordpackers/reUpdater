@@ -1,6 +1,6 @@
 # Roadmap
 
-## Features
+## Reimplemented Features
 
 - [x] New install
 - [ ] Update host
