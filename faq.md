@@ -40,7 +40,9 @@ Sure you can! Although it's not on this side of the frontend though, you should 
 
 ## What improvements does this have over the original?
 
-Multithreading. That's it. As I want to keep it 100% compatible with `app.asar`, not removing features from the original and mostly same functionality.
+- Multithreaded downloads and installs, enabling all updates to be downloaded, and simultaneously installs them.
+
+- Allows custom update API. Unlike Discord's `updater.node`, this allows for integration with alternative update APIs, enabling patched updates.
 
 ## Would this be available to macOS/Linux users?
 
