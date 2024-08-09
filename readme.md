@@ -8,7 +8,7 @@ For support join: https://discord.gg/SP4syJnFqg
 
 ## Status
 
-Currently it's hard to estimate. And as it's in alpha it's not 100% usable yet. Please use it with caution.
+Currently it's hard to estimate. It can be used now but it's still have bugs. Please use it with caution.
 
 Can now work on a new install!
 
