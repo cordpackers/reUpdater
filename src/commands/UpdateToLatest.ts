@@ -5,7 +5,7 @@ import path from "path";
 import moduleVersion from "../classes/details/moduleVersion.js";
 import { SQLiteDB } from "../classes/database.js";
 import hostVersion from "../classes/details/hostVersion.js";
-import { runThread } from "../utils/runThread.js";
+import { runThreadTask } from "../utils/runThreadTask.js";
 import { createFolder } from "../utils/createFolder.js";
 import fetch from "../compat/fetch.js";
 
@@ -30,7 +30,8 @@ async function UpdateToLatest(
     install_id: any;
   },
   updater: any,
-  options: any
+  options: any,
+  installedHostsAndModules: any
 ) {
   let currentModules: { [key: string]: any } = {};
 
@@ -49,14 +50,7 @@ async function UpdateToLatest(
     install_id = install_id;
   }
 
-  let installedHostsAndModules: any;
   let needUpdateLatestHost = true; // assume that it needed updating
-
-  installedHostsAndModules = JSON.parse(
-    db.runQuery(
-      `SELECT value FROM key_values WHERE key = 'host/app/${release_channel}/${platform}/${arch}'`
-    )[0].value
-  )[0];
 
   const currentHostVersion = installedHostsAndModules.host_version.version;
 
@@ -206,7 +200,7 @@ async function UpdateToLatest(
     async function processTasks() {
       for (const task of tasks) {
         const taskPromises = task.map((task: any) =>
-          runThread(
+          runThreadTask(
             task,
             {
               ...task,
@@ -220,18 +214,27 @@ async function UpdateToLatest(
           )
         );
         const result = Promise.all(taskPromises);
-        if (result) {
+        if (
+          (await result) &&
+          (await result).some((result) => {
+            if (result) {
+              return true;
+            } else {
+              return false;
+            }
+          })
+        ) {
           for (const hostOrModule of await result) {
-            switch (hostOrModule.type) {
+            switch (hostOrModule[0].type) {
               case "HostInstall": {
-                installedHostsAndModules.host_version = hostOrModule.version;
+                installedHostsAndModules.host_version = hostOrModule[0].version;
                 installedHostsAndModules.distro_manifest =
-                  hostOrModule.delta_manifest;
+                  hostOrModule[0].delta_manifest;
               }
               case "ModuleInstall": {
                 installedHostsAndModules.modules.push({
-                  module_version: hostOrModule.version,
-                  distro_manifest: hostOrModule.delta_manifest,
+                  module_version: hostOrModule[0].version,
+                  distro_manifest: hostOrModule[0].delta_manifest,
                   install_state: "Installed",
                 });
               }

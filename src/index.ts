@@ -1,4 +1,5 @@
 import path from "path";
+import EventEmitter from "events";
 
 import { SQLiteDB } from "./classes/database.js";
 import UpdateToLatest from "./commands/UpdateToLatest.js";
@@ -6,6 +7,9 @@ import errorMessage from "./classes/messages/errorMessage.js";
 import { QueryCurrentVersions } from "./commands/QueryCurrentVersions.js";
 import { SetManifests } from "./commands/SetManifests.js";
 import { CollectGarbage } from "./commands/CollectGarbage.js";
+import { runThreadCommand } from "./utils/runThreadCommand.js";
+
+const installedModulesEvent = new EventEmitter();
 
 class Updater {
   response_handler: any;
@@ -19,6 +23,7 @@ class Updater {
   install_id: () => any;
   updateFinished: boolean;
   isRunningUpdate: any | undefined;
+  installedHostsAndModules: any;
 
   constructor(options: {
     response_handler: any;
@@ -67,6 +72,13 @@ class Updater {
 
       return install_id;
     };
+    this.installedHostsAndModules = JSON.parse(
+      this.db.runQuery(
+        `SELECT value FROM key_values WHERE key = 'host/app/${
+          this.release_channel
+        }/${this.platform}/${this.arch()}'`
+      )[0].value
+    )[0];
     this.updateFinished = false;
   }
 
@@ -98,11 +110,62 @@ class Updater {
               install_id: this.install_id(),
             },
             this,
-            request[1].UpdateToLatest.options
+            request[1].UpdateToLatest.options,
+            this.installedHostsAndModules
           );
           break;
         }
         case "InstallModule": {
+          // TODO: Update Install states as it installs, or deletes. Maybe PendingInstall is redundant in this reimplementation?
+          // Discord Install States: PendingInstall, Installed, PendingDelete
+          const installedHostsAndModules = JSON.parse(
+            this.db.runQuery(
+              `SELECT value FROM key_values WHERE key = 'host/app/${
+                this.release_channel
+              }/${this.platform}/${this.arch()}'`
+            )[0].value
+          )[0];
+          const response = JSON.parse(
+            this.db.runQuery(
+              `SELECT value FROM key_values WHERE key = 'latest/host/app/${
+                this.release_channel
+              }/${this.platform}/${this.arch()}'`
+            )[0].value
+          );
+          runThreadCommand(
+            path.join(__dirname, "commands", "InstallModule.js"),
+            {
+              updater_options: {
+                release_channel: this.release_channel,
+                platform: this.platform,
+                root_path: this.root_path,
+                arch: this.arch(),
+                latestResponse: response,
+              },
+              name: request[1].InstallModule.name,
+              options: request[1].InstallModule.options,
+              installedHostsAndModules: installedHostsAndModules,
+            },
+            this.response_handler,
+            request
+          )
+            .then((result) => {
+              installedModulesEvent.emit(
+                "installed",
+                result,
+                this.db,
+                this.installedHostsAndModules,
+                this.release_channel,
+                this.platform,
+                this.arch()
+              );
+              this.response_handler(
+                JSON.stringify([request[0], { ManifestInfo: { ...result[1] } }])
+              );
+            })
+            .catch((err) => {
+              console.error(err);
+            });
           break;
         } // Downloads and installs additional modules after updating to latest version
         case "Repair": {
@@ -180,6 +243,40 @@ class Updater {
 
 console.log(
   "[Updater] reUpdater v0.5.0 - Javascript-based updater.node replacement"
+);
+
+installedModulesEvent.on(
+  "installed",
+  (
+    installedModuleResults,
+    db,
+    installedHostsAndModules,
+    release_channel,
+    platform,
+    arch
+  ) => {
+    console.log("Event emitted");
+    if ((installedModuleResults[0].type = "ModuleInstall")) {
+      installedHostsAndModules.modules.push({
+        module_version: installedModuleResults[0].version,
+        distro_manifest: installedModuleResults[0].delta_manifest,
+        install_state: "Installed",
+      });
+    }
+
+    try {
+      db.runQuery(`
+                UPDATE key_values
+                SET value = '[${JSON.stringify(installedHostsAndModules)}]'
+                WHERE key = 'host/app/${release_channel}/${platform}/${arch}'
+              `);
+      console.log(
+        `[Updater] Row "host/app/${release_channel}/${platform}/${arch}" has been inserted successfully`
+      );
+    } catch (error) {
+      throw error;
+    }
+  }
 );
 
 export = {
