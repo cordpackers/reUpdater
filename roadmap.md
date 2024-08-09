@@ -22,11 +22,11 @@
     - [x] Show task progress
     - [x] Return Manifest info when done
 
-- [ ] InstallModule
-    - [ ] Download packages
-    - [ ] Install packages
-    - [ ] Update `installer.db` states
-    - [ ] Show task progress
+- [x] InstallModule
+    - [x] Download packages
+    - [x] Install packages
+    - [x] Update `installer.db` states
+    - [x] Show task progress
 
 - [x] QueryCurrentVersions
 

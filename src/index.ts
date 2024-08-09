@@ -242,7 +242,7 @@ class Updater {
 }
 
 console.log(
-  "[Updater] reUpdater v0.5.0 - Javascript-based updater.node replacement"
+  "[Updater] reUpdater v0.7.0 - Javascript-based updater.node replacement"
 );
 
 installedModulesEvent.on(
