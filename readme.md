@@ -4,7 +4,7 @@ An open source alternative to/replacement of Discord's Rust-programmed `updater.
 
 For questions read `faq.md`.
 
-Developed once in a while.
+For support join: https://discord.gg/SP4syJnFqg
 
 ## Status
 
