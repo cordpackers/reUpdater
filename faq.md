@@ -44,6 +44,8 @@ Sure you can! Although it's not on this side of the frontend though, you should 
 
 - Allows custom update API. Unlike Discord's `updater.node`, this allows for integration with alternative update APIs, enabling patched updates.
 
+- Enhanced privacy. Discord logs analytics for installs and updates, this replacement does not send any analytics to Discord.
+
 ## Would this be available to macOS/Linux users?
 
 **Maybe.**
