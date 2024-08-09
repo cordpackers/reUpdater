@@ -5,7 +5,6 @@ class SQLiteDB {
 
   constructor(dbPath: string) {
     this.db = new Database(dbPath);
-    console.log(this.db);
     console.log("[Updater] Connected to the database");
   }
 
