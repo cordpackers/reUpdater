@@ -36,8 +36,6 @@ function QueryCurrentVersions(
       module.module_version.version;
   }
 
-  // TODO: Maybe check if making last_successful_update equalling running_update would cause any update issues...
-
   last_successful_update = JSON.parse(
     db.runQuery(
       `SELECT value FROM key_values WHERE key = 'latest/host/app/${release_channel}/${platform}/${arch}'`
@@ -46,31 +44,20 @@ function QueryCurrentVersions(
 
   running_update = last_successful_update;
 
+  const response = {
+    VersionInfo: {
+      current_host: currentHost,
+      current_modules: currentModules,
+      last_successful_update: last_successful_update,
+      running_update: updater.isRunningUpdate ? running_update : null,
+      pinned_update: null,
+    },
+  };
+
   if (sync) {
-    return JSON.stringify({
-      VersionInfo: {
-        current_host: currentHost,
-        current_modules: currentModules,
-        last_successful_update: last_successful_update,
-        running_update: updater.isRunningUpdate ? running_update : null,
-        pinned_update: null,
-      },
-    });
+    return JSON.stringify(response);
   } else {
-    response_handler(
-      JSON.stringify([
-        request[0],
-        {
-          VersionInfo: {
-            current_host: currentHost,
-            current_modules: currentModules,
-            last_successful_update: last_successful_update,
-            running_update: updater.isRunningUpdate ? running_update : null,
-            pinned_update: null,
-          },
-        },
-      ])
-    );
+    response_handler(JSON.stringify([request[0], response]));
   }
 }
 

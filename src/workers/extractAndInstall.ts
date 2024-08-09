@@ -7,26 +7,7 @@ import tar_fs from "tar-fs";
 import TaskProgressDetail from "../classes/messages/taskProgress.js";
 import { createFolder } from "../utils/createFolder.js";
 import { once } from "stream";
-
-function waitForFolder(folderPath: any, intervalMs: number) {
-  function checkFolder() {
-    let success = false;
-
-    fs.access(folderPath, (err) => {
-      if (!err) {
-        console.log(`[Updater] Folder '${folderPath}' exists.`);
-        success = true;
-      } else {
-        console.log(`[Updater] Folder '${folderPath}' does not exist.`);
-        setTimeout(checkFolder, intervalMs);
-      }
-    });
-
-    return success;
-  }
-
-  checkFolder();
-}
+import { waitForFolder } from "../utils/waitForFolder.js";
 
 function extractTar(tarballPath: string, extractFolder: string) {
   const compressedTarball = fs.createReadStream(tarballPath);

@@ -1,4 +1,3 @@
-// TODO: Move installed manifests setting to here and make PendingInstall in UpdateToLatest
 // TODO: Implement stubbed commands
 // Apparently it returns "OK" and only handle Pinned ones. Haven't seen it before though.
 

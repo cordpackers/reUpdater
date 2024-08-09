@@ -32,7 +32,7 @@ async function UpdateToLatest(
   updater: any,
   options: any
 ) {
-  let currentModules: any[] = [];
+  let currentModules: { [key: string]: any } = {};
 
   if (!install_id) {
     install_id = crypto.randomUUID();
@@ -68,11 +68,13 @@ async function UpdateToLatest(
 
   let response;
 
-  response = JSON.parse(
-    db.runQuery(
-      `SELECT value FROM key_values WHERE key = 'latest/host/app/${release_channel}/${platform}/${arch}'`
-    )[0].value
+  const latestUpdateFromDB = db.runQuery(
+    `SELECT value FROM key_values WHERE key = 'latest/host/app/${release_channel}/${platform}/${arch}'`
   );
+
+  if (latestUpdateFromDB.length !== 0) {
+    response = JSON.parse(latestUpdateFromDB[0].value);
+  }
 
   const fetchedData = await (
     await fetch(
@@ -108,31 +110,28 @@ async function UpdateToLatest(
   }
 
   for (const module of installedHostsAndModules.modules) {
-    currentModules.push(module.module_version.module.name);
+    currentModules[module.module_version.module.name] =
+      module.module_version.version;
   }
-
-  console.log(JSON.stringify(currentModules));
-  console.log(JSON.stringify(fetchedData.required_modules));
 
   if (
     !needUpdateLatestHost &&
-    currentModules.some((element) =>
-      fetchedData.required_modules.includes(element)
-    )
+    Object.keys(currentModules).some((key) => {
+      return (
+        response.required_modules.includes(key) &&
+        response.modules[key].full.module_version === currentModules[key]
+      );
+    })
   ) {
+    console.log(
+      `[Updater] Module update skipped, all modules are running on latest version.`
+    );
     updater.updateFinished = true;
   }
 
   if (!updater.updateFinished) {
     // TODO: Check if there is a delta update package, if there is, copy the whole current folder and install changes
     // Full update current works though but will work on delta updating in the future
-
-    // TODO: Move setting Installed manifest to SetManifest command. Maybe that's how PendingInstall install state exists
-
-    // TODO: Update Install states as it installs, or deletes. Maybe PendingInstall is redundant in this reimplementation?
-    // host/app/development/win/x86: add new host+modules version, it's sha256 hash and install state
-    // remove if folder not exist
-    // Discord Install States: PendingInstall, Installed, PendingDelete
 
     const newHostVersionDetails = {
       version: {
@@ -162,8 +161,21 @@ async function UpdateToLatest(
     }
 
     let modulesVersionDetails: object[] = [];
+    let modulesToInstall: any[] = [];
 
-    for (const module of response.required_modules) {
+    if (installedHostsAndModules.modules.length === 0) {
+      modulesToInstall = response.required_modules;
+    } else if (needUpdateLatestHost) {
+      modulesToInstall = Object.keys(currentModules);
+    } else {
+      modulesToInstall = Object.keys(currentModules).filter((key) => {
+        return (
+          response.modules[key].full.module_version !== currentModules[key]
+        );
+      });
+    }
+
+    for (const module of modulesToInstall) {
       const moduleData = response.modules[module].full;
       modulesVersionDetails.push({
         version: new moduleVersion(
@@ -187,6 +199,9 @@ async function UpdateToLatest(
         ...module,
       });
     }
+
+    // TODO: Update Install states as it installs, or deletes. Maybe PendingInstall is redundant in this reimplementation?
+    // Discord Install States: PendingInstall, Installed, PendingDelete
 
     async function processTasks() {
       for (const task of tasks) {
