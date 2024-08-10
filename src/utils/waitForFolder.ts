@@ -6,10 +6,8 @@ function waitForFolder(folderPath: any, intervalMs: number) {
 
     try {
       fs.accessSync(folderPath, fs.constants.R_OK | fs.constants.W_OK);
-      console.log(`[Updater] Folder '${folderPath}' exists.`);
       success = true;
     } catch (err) {
-      console.log(`[Updater] Folder '${folderPath}' does not exist.`);
       setTimeout(checkFolder, intervalMs);
     }
 

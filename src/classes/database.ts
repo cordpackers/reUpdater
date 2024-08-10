@@ -5,7 +5,6 @@ class SQLiteDB {
 
   constructor(dbPath: string) {
     this.db = new Database(dbPath);
-    console.log("[Updater] Connected to the database");
   }
 
   runQuery(query: string, params: any[] = []): any {
@@ -19,7 +18,6 @@ class SQLiteDB {
 
   close(): void {
     this.db.close();
-    console.log("[Updater] Database connection closed");
   }
 }
 

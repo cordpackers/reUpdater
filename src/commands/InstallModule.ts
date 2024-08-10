@@ -16,53 +16,70 @@ async function InstallModule(
   options: any,
   installedHostsAndModules: any
 ) {
-  const moduleData = updater_options.latestResponse.modules[name].full;
-  const modulesVersionDetails = {
-    version: new moduleVersion(
-      installedHostsAndModules.host_version,
-      name,
-      moduleData.module_version
-    ).formatted(),
-    from_version: null,
-    package_sha256: moduleData.package_sha256,
-    url: moduleData.url,
-  };
+  let currentModules: { [key: string]: any } = {};
+  let alreadyDownloaded = false;
 
-  await performDownload(
-    "ModuleDownload",
-    modulesVersionDetails.version,
-    modulesVersionDetails.from_version,
-    modulesVersionDetails.package_sha256,
-    modulesVersionDetails.url,
-    updater_options.root_path,
-    parentPort
+  for (const module of installedHostsAndModules.modules) {
+    currentModules[module.module_version.module.name] =
+      module.module_version.version;
+  }
+
+  if (
+    Object.keys(currentModules).some((key) => {
+      return key.includes(name);
+    })
+  ) {
+    console.log(`[Updater] Module installed, skipping...`);
+    alreadyDownloaded = true;
+  }
+
+  if (!alreadyDownloaded) {
+    const moduleData = updater_options.latestResponse.modules[name].full;
+    const modulesVersionDetails = {
+      version: new moduleVersion(
+        installedHostsAndModules.host_version,
+        name,
+        moduleData.module_version
+      ).formatted(),
+      from_version: null,
+      package_sha256: moduleData.package_sha256,
+      url: moduleData.url,
+    };
+
+    await performDownload(
+      "ModuleDownload",
+      modulesVersionDetails.version,
+      modulesVersionDetails.from_version,
+      modulesVersionDetails.package_sha256,
+      modulesVersionDetails.url,
+      updater_options.root_path,
+      parentPort
+    );
+
+    await performInstall(
+      "ModuleInstall",
+      modulesVersionDetails.version,
+      modulesVersionDetails.from_version,
+      modulesVersionDetails.package_sha256,
+      modulesVersionDetails.url,
+      updater_options.root_path,
+      parentPort
+    );
+  }
+
+  parentPort?.postMessage(
+    JSON.stringify({
+      sendManifest: {
+        ...updater_options.latestResponse,
+      },
+    })
   );
-
-  await performInstall(
-    "ModuleInstall",
-    modulesVersionDetails.version,
-    modulesVersionDetails.from_version,
-    modulesVersionDetails.package_sha256,
-    modulesVersionDetails.url,
-    updater_options.root_path,
-    parentPort
-  );
-
-  parentPort?.postMessage(JSON.stringify({
-    sendManifest: {
-      ...updater_options.latestResponse,
-    },
-  }));
 }
 
-const { updater_options, name, options, installedHostsAndModules } =
-  workerData;
+const { updater_options, name, options, installedHostsAndModules } = workerData;
 
-InstallModule(
-  updater_options,
-  name,
-  options,
-  installedHostsAndModules,
-).catch((error) => {
-  throw error;
-});
+InstallModule(updater_options, name, options, installedHostsAndModules).catch(
+  (error) => {
+    throw error;
+  }
+);

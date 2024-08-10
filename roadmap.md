@@ -27,6 +27,7 @@
     - [x] Install packages
     - [x] Update `installer.db` states
     - [x] Show task progress
+    - [x] Return Manifest info when done
 
 - [x] QueryCurrentVersions
 

@@ -9,6 +9,8 @@ import { SetManifests } from "./commands/SetManifests.js";
 import { CollectGarbage } from "./commands/CollectGarbage.js";
 import { runThreadCommand } from "./utils/runThreadCommand.js";
 
+import packageJson from "../package.json";
+
 const installedModulesEvent = new EventEmitter();
 
 class Updater {
@@ -66,7 +68,6 @@ class Updater {
       if (result.length !== 0) {
         install_id = result[0].value.slice(1, -1);
       } else {
-        console.log(`[Updater]: install_id key does not exist. Nulling...`);
         install_id = null;
       }
 
@@ -150,17 +151,30 @@ class Updater {
             request
           )
             .then((result) => {
-              installedModulesEvent.emit(
-                "installed",
-                result,
-                this.db,
-                this.installedHostsAndModules,
-                this.release_channel,
-                this.platform,
-                this.arch()
-              );
+              let sendToDB;
+              let sendManifest;
+              if (result[0].hasOwnProperty("type")) {
+                sendToDB = result[0];
+                sendManifest = result[1];
+              } else {
+                sendManifest = result[0];
+              }
+              if (sendToDB) {
+                installedModulesEvent.emit(
+                  "installed",
+                  sendToDB,
+                  this.db,
+                  this.installedHostsAndModules,
+                  this.release_channel,
+                  this.platform,
+                  this.arch()
+                );
+              }
               this.response_handler(
-                JSON.stringify([request[0], { ManifestInfo: { ...result[1] } }])
+                JSON.stringify([
+                  request[0],
+                  { ManifestInfo: { ...sendManifest } },
+                ])
               );
             })
             .catch((err) => {
@@ -183,7 +197,8 @@ class Updater {
             },
             this,
             request[1].QueryCurrentVersions.options,
-            false
+            false,
+            this.installedHostsAndModules
           );
           break;
         }
@@ -222,7 +237,8 @@ class Updater {
           },
           this,
           request[1].QueryCurrentVersions.options,
-          true
+          true,
+          this.installedHostsAndModules
         );
       }
       case "SetManifests": {
@@ -242,7 +258,7 @@ class Updater {
 }
 
 console.log(
-  "[Updater] reUpdater v0.7.0 - Javascript-based updater.node replacement"
+  `[Updater] reUpdater v${packageJson.version} - Typescript/Javascript-based updater.node replacement`
 );
 
 installedModulesEvent.on(
@@ -255,11 +271,10 @@ installedModulesEvent.on(
     platform,
     arch
   ) => {
-    console.log("Event emitted");
-    if ((installedModuleResults[0].type = "ModuleInstall")) {
+    if ((installedModuleResults.type = "ModuleInstall")) {
       installedHostsAndModules.modules.push({
-        module_version: installedModuleResults[0].version,
-        distro_manifest: installedModuleResults[0].delta_manifest,
+        module_version: installedModuleResults.version,
+        distro_manifest: installedModuleResults.delta_manifest,
         install_state: "Installed",
       });
     }
@@ -270,9 +285,6 @@ installedModulesEvent.on(
                 SET value = '[${JSON.stringify(installedHostsAndModules)}]'
                 WHERE key = 'host/app/${release_channel}/${platform}/${arch}'
               `);
-      console.log(
-        `[Updater] Row "host/app/${release_channel}/${platform}/${arch}" has been inserted successfully`
-      );
     } catch (error) {
       throw error;
     }

@@ -42,7 +42,6 @@ async function UpdateToLatest(
           INSERT INTO key_values (key, value)
           VALUES ('install_id', '"${install_id}"')
         `);
-      console.log('[Updater] Row "install_id" has been inserted successfully');
     } catch (error) {
       throw error;
     }
@@ -53,8 +52,6 @@ async function UpdateToLatest(
   let needUpdateLatestHost = true; // assume that it needed updating
 
   const currentHostVersion = installedHostsAndModules.host_version.version;
-
-  console.log(`[Updater] Current version: ${currentHostVersion}`);
 
   if (!currentHostVersion) {
     throw new Error("No hostVersion");
@@ -85,9 +82,6 @@ async function UpdateToLatest(
     SET value = '${JSON.stringify(response)}'
     WHERE key = 'latest/host/app/${release_channel}/${platform}/${arch}'
   `);
-      console.log(
-        `[Updater] Row "latest/host/app/${release_channel}/${platform}/${arch}" has been inserted successfully`
-      );
     } catch (error) {
       throw error;
     }
@@ -217,11 +211,7 @@ async function UpdateToLatest(
         if (
           (await result) &&
           (await result).some((result) => {
-            if (result) {
-              return true;
-            } else {
-              return false;
-            }
+            return result ? true : false;
           })
         ) {
           for (const hostOrModule of await result) {
@@ -232,11 +222,31 @@ async function UpdateToLatest(
                   hostOrModule[0].delta_manifest;
               }
               case "ModuleInstall": {
-                installedHostsAndModules.modules.push({
-                  module_version: hostOrModule[0].version,
-                  distro_manifest: hostOrModule[0].delta_manifest,
-                  install_state: "Installed",
-                });
+                if (
+                  installedHostsAndModules.modules.every((module: any) => {
+                    return (
+                      module.module_version.module.name !==
+                      hostOrModule[0].version.module.name
+                    );
+                  })
+                ) {
+                  installedHostsAndModules.modules.push({
+                    module_version: hostOrModule[0].version,
+                    distro_manifest: hostOrModule[0].delta_manifest,
+                    install_state: "Installed",
+                  });
+                } else {
+                  installedHostsAndModules.modules =
+                    installedHostsAndModules.modules.map((module: any) => {
+                      if (
+                        module.module_version.module.name ===
+                        hostOrModule[0].version.module.name
+                      ) {
+                        module.module_version = hostOrModule[0].version;
+                        module.distro_manifest = hostOrModule[0].delta_manifest;
+                      }
+                    });
+                }
               }
             }
           }
@@ -272,9 +282,6 @@ async function UpdateToLatest(
     SET value = '[${JSON.stringify(installedHostsAndModules)}]'
     WHERE key = 'host/app/${release_channel}/${platform}/${arch}'
   `);
-      console.log(
-        `[Updater] Row "host/app/${release_channel}/${platform}/${arch}" has been inserted successfully`
-      );
     } catch (error) {
       throw error;
     }

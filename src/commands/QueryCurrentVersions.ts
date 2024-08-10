@@ -16,18 +16,13 @@ function QueryCurrentVersions(
   },
   updater: any,
   options: any,
-  sync: boolean
+  sync: boolean,
+  installedHostsAndModules: any
 ) {
   let currentHost;
   let currentModules: { [key: string]: any } = {};
   let last_successful_update;
   let running_update;
-
-  const installedHostsAndModules = JSON.parse(
-    db.runQuery(
-      `SELECT value FROM key_values WHERE key = 'host/app/${release_channel}/${platform}/${arch}'`
-    )[0].value
-  )[0];
 
   currentHost = installedHostsAndModules.host_version.version;
 
