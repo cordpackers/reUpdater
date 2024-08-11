@@ -104,7 +104,8 @@ async function UpdateToLatest(
 
   if (
     !needUpdateLatestHost &&
-    Object.keys(currentModules).some((key) => {
+    Object.keys(currentModules).length !== 0 &&
+    Object.keys(currentModules).every((key) => {
       return (
         response.required_modules.includes(key) &&
         response.modules[key].full.module_version === currentModules[key]
@@ -245,6 +246,7 @@ async function UpdateToLatest(
                         module.module_version = hostOrModule[0].version;
                         module.distro_manifest = hostOrModule[0].delta_manifest;
                       }
+                      return module;
                     });
                 }
               }
