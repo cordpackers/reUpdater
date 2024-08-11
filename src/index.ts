@@ -1,5 +1,7 @@
 import path from "path";
 import EventEmitter from "events";
+import getPath from 'platform-folders';
+const createShortcut = require('create-desktop-shortcuts');
 
 import { SQLiteDB } from "./classes/database.js";
 import UpdateToLatest from "./commands/UpdateToLatest.js";
@@ -247,13 +249,25 @@ class Updater {
     }
   }
 
-  known_folder(name: string) {
-    // TODO: Returns Desktop or Start Menu
-    return "";
+  known_folder(name: any) {
+    return getPath(name);
   }
 
   create_shortcut(options: any) {
-    // TODO: creates a shortcut on both Desktop or Start Menu if not exist
+    const shortcutName = path.basename(options.shortcut_path, "lnk")
+    const outputPath = path.dirname(options.shortcut_path)
+    createShortcut({
+      onlyCurrentOS: true,
+      windows: {
+        filePath: options.target_path,
+        outputPath: outputPath,
+        name: shortcutName,
+        comment: options.description,
+        icon: `${options.icon_path},${options.icon_index}`,
+        arguments: options.arguments,
+        workingDirectory: options.working_directory
+      }
+    })
   }
 }
 

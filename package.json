@@ -29,7 +29,9 @@
   "dependencies": {
     "@electron/rebuild": "^3.6.0",
     "better-sqlite3": "^11.1.2",
+    "create-desktop-shortcuts": "^1.11.0",
     "fs-extra": "^11.2.0",
+    "platform-folders": "^0.6.0",
     "tar-fs": "^3.0.6",
     "undici": "^6.19.5"
   }

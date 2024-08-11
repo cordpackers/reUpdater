@@ -10,8 +10,8 @@
 
 - [x] command
 - [x] command_blocking
-- [ ] known_folder
-- [ ] create_shortcut
+- [x] known_folder
+- [x] create_shortcut
 
 ## Reimplemented commands
 - [x] UpdateToLatest
