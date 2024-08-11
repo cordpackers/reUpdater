@@ -1,6 +1,6 @@
 {
   "name": "reupdater",
-  "version": "0.8.0",
+  "version": "0.8.1",
   "description": "An open source alternative to/replacement of Discord's Rust-programmed updater.node.",
   "private": "true",
   "main": "./dist/index.js",
