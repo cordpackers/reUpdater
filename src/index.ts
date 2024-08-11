@@ -121,13 +121,6 @@ class Updater {
         case "InstallModule": {
           // TODO: Update Install states as it installs, or deletes. Maybe PendingInstall is redundant in this reimplementation?
           // Discord Install States: PendingInstall, Installed, PendingDelete
-          const installedHostsAndModules = JSON.parse(
-            this.db.runQuery(
-              `SELECT value FROM key_values WHERE key = 'host/app/${
-                this.release_channel
-              }/${this.platform}/${this.arch()}'`
-            )[0].value
-          )[0];
           const response = JSON.parse(
             this.db.runQuery(
               `SELECT value FROM key_values WHERE key = 'latest/host/app/${
@@ -147,7 +140,7 @@ class Updater {
               },
               name: request[1].InstallModule.name,
               options: request[1].InstallModule.options,
-              installedHostsAndModules: installedHostsAndModules,
+              installedHostsAndModules: this.installedHostsAndModules,
             },
             this.response_handler,
             request
