@@ -15,7 +15,7 @@ Can now work on a new install!
 ## Usage
 
 ### For normal users
-1. Download `reUpdater.zip`. 
+1. Download `release.zip`. 
 2. Go to `discordDir/app-latest.version.here/`, delete (or rename) the `updater.node` file and create a folder named `updater`. 
 3. Extract the files inside.
 4. If you have any `was compiled against a different Node.js version` problems please find the Electron version used and run `./node_modules/.bin/electron-rebuild -v (electron version here)` from the `updater` folder.
