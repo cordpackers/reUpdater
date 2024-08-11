@@ -4,7 +4,7 @@
 
 - [x] New install
 - [ ] Update host
-- [ ] Update modules
+- [x] Update modules
 
 ## Reimplemented functions
 
