@@ -3,7 +3,7 @@
 ## Reimplemented Features
 
 - [x] New install
-- [ ] Update host
+- [x] Update host
 - [x] Update modules
 
 ## Reimplemented functions
