@@ -57,6 +57,21 @@ async function UpdateToLatest(
     throw new Error("No hostVersion");
   }
 
+  const appVersionList = fs.readdirSync(root_path).filter((folderOrFile) => {
+    return folderOrFile.includes("app-");
+  });
+
+  appVersionList.forEach((version) => {
+    if (version !== `app-${currentHostVersion.join(".")}`) {
+      process.noAsar = true;
+      fs.rmSync(path.join(root_path, version), {
+        recursive: true,
+        force: true,
+      });
+      process.noAsar = false;
+    }
+  });
+
   let response;
 
   const latestUpdateFromDB = db.runQuery(
@@ -101,6 +116,36 @@ async function UpdateToLatest(
     currentModules[module.module_version.module.name] =
       module.module_version.version;
   }
+
+  const moduleFolder = path.join(
+    root_path,
+    `app-${currentHostVersion.join(".")}`,
+    "modules"
+  );
+
+  const moduleVersionList = fs.existsSync(moduleFolder)
+    ? fs.readdirSync(moduleFolder)
+    : null;
+
+  moduleVersionList?.forEach((modulePlusVersion) => {
+    const splittedMPV = modulePlusVersion.split("-");
+    if (parseInt(splittedMPV[1]) !== currentModules[splittedMPV[0]]) {
+      process.noAsar = true;
+      fs.rmSync(
+        path.join(
+          root_path,
+          `app-${currentHostVersion.join(".")}`,
+          "modules",
+          modulePlusVersion
+        ),
+        {
+          recursive: true,
+          force: true,
+        }
+      );
+      process.noAsar = false;
+    }
+  });
 
   if (
     !needUpdateLatestHost &&
@@ -221,22 +266,25 @@ async function UpdateToLatest(
                 installedHostsAndModules.host_version = hostOrModule[0].version;
                 installedHostsAndModules.distro_manifest =
                   hostOrModule[0].delta_manifest;
+                fs.writeFileSync(
+                  path.join(root_path, "packages", "RELEASES"),
+                  `0000000000000000000000000000000000000000 reUpdater-${hostOrModule[0].version.version.join(
+                    "."
+                  )}.nupkg 0`,
+                  { encoding: "utf-8" }
+                );
+                break;
               }
               case "ModuleInstall": {
                 if (
-                  installedHostsAndModules.modules.every((module: any) => {
+                  installedHostsAndModules.modules.length !== 0 &&
+                  installedHostsAndModules.modules.some((module: any) => {
                     return (
-                      module.module_version.module.name !==
+                      module.module_version.module.name ===
                       hostOrModule[0].version.module.name
                     );
                   })
                 ) {
-                  installedHostsAndModules.modules.push({
-                    module_version: hostOrModule[0].version,
-                    distro_manifest: hostOrModule[0].delta_manifest,
-                    install_state: "Installed",
-                  });
-                } else {
                   installedHostsAndModules.modules =
                     installedHostsAndModules.modules.map((module: any) => {
                       if (
@@ -248,6 +296,12 @@ async function UpdateToLatest(
                       }
                       return module;
                     });
+                } else {
+                  installedHostsAndModules.modules.push({
+                    module_version: hostOrModule[0].version,
+                    distro_manifest: hostOrModule[0].delta_manifest,
+                    install_state: "Installed",
+                  });
                 }
               }
             }

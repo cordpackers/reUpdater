@@ -96,13 +96,14 @@ async function handleExtract(
           delta_manifest: delta_manifest,
         },
       }));
-      fs.moveSync(path.join(extractFolder, "files"), outputFolder);
       switch (type) {
         case "HostInstall": {
-          fs.rmdirSync(extractFolder);
+          fs.cpSync(path.join(extractFolder, "files"), outputFolder, {recursive: true})
+          fs.rmSync(extractFolder, { recursive: true, force: true });
           break;
         }
         case "ModuleInstall": {
+          fs.moveSync(path.join(extractFolder, "files"), outputFolder);
           fs.rmSync(path.join(extractFolder, "delta_manifest.json"));
         }
       }
@@ -114,6 +115,8 @@ async function handleExtract(
   task.state = "Complete";
   task.progress = 100.0;
   task.bytes = 0;
+
+  process.noAsar = false;
 
   parentPort?.postMessage(JSON.stringify(task.formatted()));
 }
