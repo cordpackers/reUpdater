@@ -116,8 +116,6 @@ async function handleExtract(
   task.progress = 100.0;
   task.bytes = 0;
 
-  process.noAsar = false;
-
   parentPort?.postMessage(JSON.stringify(task.formatted()));
 }
 

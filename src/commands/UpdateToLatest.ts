@@ -51,18 +51,34 @@ async function UpdateToLatest(
 
   let needUpdateLatestHost = true; // assume that it needed updating
 
-  const currentHostVersion = installedHostsAndModules.host_version.version;
+  const latestInstalledHostVersion =
+    installedHostsAndModules.host_version.version;
 
-  if (!currentHostVersion) {
+  if (!latestInstalledHostVersion) {
     throw new Error("No hostVersion");
   }
+
+  const matchRunningHostFromDirname = __dirname.match(/app-(\d+)\.(\d+).(\d+)/);
+
+  console.log(matchRunningHostFromDirname)
+
+  const currentHostVersion = matchRunningHostFromDirname
+    ?.slice(1, matchRunningHostFromDirname.length)
+    .map((element) => {
+      return parseInt(element);
+    });
 
   const appVersionList = fs.readdirSync(root_path).filter((folderOrFile) => {
     return folderOrFile.includes("app-");
   });
 
+
+  if (!currentHostVersion || currentHostVersion.length === 0) {
+    throw new Error("No hostVersion");
+  }
+
   appVersionList.forEach((version) => {
-    if (version !== `app-${currentHostVersion.join(".")}`) {
+    if (version !== `app-${currentHostVersion.join(".")}` && version !== `app-${latestInstalledHostVersion.join(".")}`) {
       process.noAsar = true;
       fs.rmSync(path.join(root_path, version), {
         recursive: true,
@@ -104,7 +120,7 @@ async function UpdateToLatest(
 
   if (
     JSON.stringify(fetchedData.full.host_version) ===
-    JSON.stringify(currentHostVersion)
+    JSON.stringify(latestInstalledHostVersion)
   ) {
     console.log(
       `[Updater] Host update skipped, running on latest host version.`
@@ -119,7 +135,7 @@ async function UpdateToLatest(
 
   const moduleFolder = path.join(
     root_path,
-    `app-${currentHostVersion.join(".")}`,
+    `app-${latestInstalledHostVersion.join(".")}`,
     "modules"
   );
 
@@ -134,7 +150,7 @@ async function UpdateToLatest(
       fs.rmSync(
         path.join(
           root_path,
-          `app-${currentHostVersion.join(".")}`,
+          `app-${latestInstalledHostVersion.join(".")}`,
           "modules",
           modulePlusVersion
         ),
