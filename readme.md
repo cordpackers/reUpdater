@@ -34,4 +34,4 @@ It's now stable in terms of usability.
 5. Go to `discordDir/app-latest.version.here/`, delete (or rename) the `updater.node` file and create a folder named `updater`. 
 6. Copy `dist`, `node_modules` and `package.json` inside.
 
-Alternatively you can package this with a repacker and setup your own update environment via [Wumpdle](https://github.com/cordpackers/Wumpdle). (recommended method if you want to test)
+Alternatively you can package this with [a repacker](https://github.com/cordpackers/rePacker) and setup your own update environment via [Wumpdle](https://github.com/cordpackers/Wumpdle). (recommended method if you want to test)
