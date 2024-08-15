@@ -14,6 +14,8 @@ Before/On v1.0.1, the license of this project used is the MIT license. However, 
 
 It's now stable in terms of usability.
 
+Note: v1.x.x is now in maintenance mode as development shifted to v2.x.x, there will be no new features added in v1.x.x.
+
 ## Usage
 
 ### For normal users
