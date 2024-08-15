@@ -10,14 +10,14 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/modulocord/reUpdater.git"
+    "url": "git+https://github.com/cordpackers/reUpdater.git"
   },
   "author": "CordPackers",
   "license": "MPL-2.0",
   "bugs": {
-    "url": "https://github.com/modulocord/reUpdater/issues"
+    "url": "https://github.com/cordpackers/reUpdater/issues"
   },
-  "homepage": "https://github.com/modulocord/reUpdater#readme",
+  "homepage": "https://github.com/cordpackers/reUpdater#readme",
   "devDependencies": {
     "@types/better-sqlite3": "^7.6.11",
     "@types/fs-extra": "^11.0.4",
