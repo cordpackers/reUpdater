@@ -1,19 +1,31 @@
 # Roadmap
 
-## Reimplemented Features
+## v2.x.x
+
+### Changes
+- [ ] Rewrite code to Zig
+- [ ] Size reduction
+
+### New features
+- [ ] Install locally without Internet (full package install)
+- [ ] Disable updates
+
+## v1.x.x
+
+### Reimplemented Features
 
 - [x] New install
 - [x] Update host
 - [x] Update modules
 
-## Reimplemented functions
+### Reimplemented functions
 
 - [x] command
 - [x] command_blocking
 - [x] known_folder
 - [x] create_shortcut
 
-## Reimplemented commands
+### Reimplemented commands
 - [x] UpdateToLatest
     - [x] Download full packages
     - [ ] Download delta packages
@@ -31,12 +43,10 @@
 
 - [x] QueryCurrentVersions
 
-## New features
-- [ ] Install locally without Internet (full package install)
-- [ ] Disable updates
+### New features
 - [x] Multithreaded Download and Install
 
-## Stubbed commands
+### Stubbed commands
 
 `SetManifests`, `Repair`, `CollectGarbage`
 

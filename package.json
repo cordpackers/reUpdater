@@ -13,7 +13,7 @@
     "url": "git+https://github.com/modulocord/reUpdater.git"
   },
   "author": "CordPackers",
-  "license": "MIT",
+  "license": "MPL-2.0",
   "bugs": {
     "url": "https://github.com/modulocord/reUpdater/issues"
   },

@@ -6,6 +6,10 @@ For questions read `faq.md`.
 
 For support join: https://discord.gg/SP4syJnFqg
 
+## License notice
+
+Before/On v1.0.1, the license of this project used is the MIT license. However, the subsequent versions after v1.0.1 will be in MPL license. If you use anything after v1.0.1, please open source your version of reUpdater, or if you did not make any changes, please mention that you use reUpdater in your project/modification.
+
 ## Status
 
 It's now stable in terms of usability.
