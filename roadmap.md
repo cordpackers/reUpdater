@@ -6,6 +6,10 @@
 - [ ] Rewrite code to Zig
 - [ ] Size reduction
 
+### Reimplemented commands
+- [ ] UpdateToLatest
+    - [ ] Download delta packages
+
 ### New features
 - [ ] Install locally without Internet (full package install)
 - [ ] Disable updates
@@ -28,7 +32,6 @@
 ### Reimplemented commands
 - [x] UpdateToLatest
     - [x] Download full packages
-    - [ ] Download delta packages
     - [x] Install packages
     - [x] Update `installer.db` states
     - [x] Show task progress
