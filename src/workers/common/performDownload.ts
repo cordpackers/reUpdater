@@ -14,7 +14,7 @@ async function downloadFile(
   const fileStream = fs.createWriteStream(filePath);
 
   const response = await fetch(url);
-  const contentLength = response.headers.get("content-length");
+  const contentLength = response.headers.get("content-length") ?? response.headers.get("X-Content-Length"); // X-Content-Length is for a workaround in express
   const reader = response.body?.getReader();
   if (!contentLength || !reader) {
     return;

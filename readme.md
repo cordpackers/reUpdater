@@ -16,6 +16,10 @@ It's now stable in terms of usability.
 
 Note: v1.x.x is now in maintenance mode as development shifted to v2.x.x, there will be no new features added in v1.x.x.
 
+## For people who implement custom update server API.
+
+`X-Content-Length` is to bypass a weird issue in Express.js/Node.js where setting `Content-Length` does not even set. For best results please set both.
+
 ## Usage
 
 ### For normal users
