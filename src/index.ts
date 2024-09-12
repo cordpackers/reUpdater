@@ -1,7 +1,8 @@
+import fs from "fs";
 import path from "path";
 import EventEmitter from "events";
-import getPath from 'platform-folders';
-const createShortcut = require('create-desktop-shortcuts');
+import getPath from "platform-folders";
+const createShortcut = require("create-desktop-shortcuts");
 
 import { SQLiteDB } from "./classes/database.js";
 import UpdateToLatest from "./commands/UpdateToLatest.js";
@@ -28,6 +29,8 @@ class Updater {
   updateFinished: boolean;
   isRunningUpdate: any | undefined;
   installedHostsAndModules: any;
+
+  isVelopack: boolean;
 
   constructor(options: {
     response_handler: any;
@@ -83,6 +86,7 @@ class Updater {
       )[0].value
     )[0];
     this.updateFinished = false;
+    this.isVelopack = fs.existsSync(path.join(this.root_path, "current"));
   }
 
   async command(rawRequest: string) {
@@ -247,8 +251,8 @@ class Updater {
   }
 
   create_shortcut(options: any) {
-    const shortcutName = path.basename(options.shortcut_path, "lnk")
-    const outputPath = path.dirname(options.shortcut_path)
+    const shortcutName = path.basename(options.shortcut_path, "lnk");
+    const outputPath = path.dirname(options.shortcut_path);
     createShortcut({
       onlyCurrentOS: true,
       windows: {
@@ -258,9 +262,9 @@ class Updater {
         comment: options.description,
         icon: `${options.icon_path},${options.icon_index}`,
         arguments: options.arguments,
-        workingDirectory: options.working_directory
-      }
-    })
+        workingDirectory: options.working_directory,
+      },
+    });
   }
 }
 

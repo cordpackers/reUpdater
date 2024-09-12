@@ -58,35 +58,38 @@ async function UpdateToLatest(
     throw new Error("No hostVersion");
   }
 
-  const matchRunningHostFromDirname = __dirname.match(/app-(\d+)\.(\d+).(\d+)/);
+  // Velopack ONLY has the current folder, removing last update isn't nessecary
+  if (!updater.isVelopack) {
+    const runningHostVersion = __dirname.match(/app-(\d+)\.(\d+).(\d+)/);
 
-  console.log(matchRunningHostFromDirname)
+    const currentHostVersion = runningHostVersion
+      ?.slice(1, runningHostVersion.length)
+      .map((element) => {
+        return parseInt(element);
+      });
 
-  const currentHostVersion = matchRunningHostFromDirname
-    ?.slice(1, matchRunningHostFromDirname.length)
-    .map((element) => {
-      return parseInt(element);
+    const appVersionList = fs.readdirSync(root_path).filter((folderOrFile) => {
+      return folderOrFile.includes("app-");
     });
 
-  const appVersionList = fs.readdirSync(root_path).filter((folderOrFile) => {
-    return folderOrFile.includes("app-");
-  });
-
-
-  if (!currentHostVersion || currentHostVersion.length === 0) {
-    throw new Error("No hostVersion");
-  }
-
-  appVersionList.forEach((version) => {
-    if (version !== `app-${currentHostVersion.join(".")}` && version !== `app-${latestInstalledHostVersion.join(".")}`) {
-      process.noAsar = true;
-      fs.rmSync(path.join(root_path, version), {
-        recursive: true,
-        force: true,
-      });
-      process.noAsar = false;
+    if (!currentHostVersion || currentHostVersion.length === 0) {
+      throw new Error("No hostVersion");
     }
-  });
+
+    appVersionList.forEach((version) => {
+      if (
+        version !== `app-${currentHostVersion.join(".")}` &&
+        version !== `app-${latestInstalledHostVersion.join(".")}`
+      ) {
+        process.noAsar = true;
+        fs.rmSync(path.join(root_path, version), {
+          recursive: true,
+          force: true,
+        });
+        process.noAsar = false;
+      }
+    });
+  }
 
   let response;
 
@@ -133,11 +136,13 @@ async function UpdateToLatest(
       module.module_version.version;
   }
 
-  const moduleFolder = path.join(
-    root_path,
-    `app-${latestInstalledHostVersion.join(".")}`,
-    "modules"
-  );
+  const moduleFolder = updater.isVelopack
+    ? path.join(root_path, "current", "modules")
+    : path.join(
+        root_path,
+        `app-${latestInstalledHostVersion.join(".")}`,
+        "modules"
+      );
 
   const moduleVersionList = fs.existsSync(moduleFolder)
     ? fs.readdirSync(moduleFolder)
@@ -147,18 +152,10 @@ async function UpdateToLatest(
     const splittedMPV = modulePlusVersion.split("-");
     if (parseInt(splittedMPV[1]) !== currentModules[splittedMPV[0]]) {
       process.noAsar = true;
-      fs.rmSync(
-        path.join(
-          root_path,
-          `app-${latestInstalledHostVersion.join(".")}`,
-          "modules",
-          modulePlusVersion
-        ),
-        {
-          recursive: true,
-          force: true,
-        }
-      );
+      fs.rmSync(path.join(moduleFolder, modulePlusVersion), {
+        recursive: true,
+        force: true,
+      });
       process.noAsar = false;
     }
   });
@@ -208,6 +205,15 @@ async function UpdateToLatest(
         type: "HostInstall",
         ...newHostVersionDetails,
       });
+      if (updater.isVelopack) {
+        // If needed to update host in Velopack then all of the modules must be removed before updating
+        process.noAsar = true;
+        fs.rmSync(path.join(root_path, "current", "modules"), {
+          recursive: true,
+          force: true,
+        });
+        process.noAsar = false;
+      }
     }
 
     let modulesVersionDetails: object[] = [];
@@ -282,6 +288,7 @@ async function UpdateToLatest(
                 installedHostsAndModules.host_version = hostOrModule[0].version;
                 installedHostsAndModules.distro_manifest =
                   hostOrModule[0].delta_manifest;
+                // It's kind of redudant in Velopack but whatever
                 fs.writeFileSync(
                   path.join(root_path, "packages", "RELEASES"),
                   `0000000000000000000000000000000000000000 reUpdater-${hostOrModule[0].version.version.join(

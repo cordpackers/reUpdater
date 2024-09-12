@@ -14,11 +14,15 @@ Before/On v1.0.1, the license of this project used is the MIT license. However, 
 
 It's now stable in terms of usability.
 
-Note: v1.x.x is now in maintenance mode as development shifted to v2.x.x, there will be no new features added in v1.x.x.
+Note: v1.x.x is mostly in maintenance mode as development shifted to v2.x.x, there might not be having new features added in v1.x.x unless it's not related in rewriting.
 
 ## For people who implement custom update server API.
 
 `X-Content-Length` is to bypass a weird issue in Express.js/Node.js where setting `Content-Length` does not even set. For best results please set both.
+
+## For people who use Velopack
+
+Please modify app.asar to move the updater folder to the root folder as updating reUpdater might be blocked by current running process.
 
 ## Usage
 

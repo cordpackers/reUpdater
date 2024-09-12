@@ -14,6 +14,11 @@
 - [ ] Install locally without Internet (full package install)
 - [ ] Disable updates
 
+## v1.1.x (Velopack experiment)
+
+### New features
+- [ ] Support Velopack
+
 ## v1.x.x
 
 ### Reimplemented Features
